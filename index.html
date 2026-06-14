@@ -2,1451 +2,548 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>回報模板產生器</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>督導回報產生器</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg-deep: #0D1B2A;
-    --bg-panel: #142231;
-    --bg-card: #1A2D40;
-    --bg-input: #0F1E2D;
-    --border: #2A4055;
-    --border-bright: #3D6080;
-    --steel: #8BA3B8;
-    --steel-light: #A8C0D4;
-    --orange: #E8933A;
-    --orange-dim: #C4762D;
-    --green: #4CAF7A;
-    --red: #E85A4F;
-    --yellow: #F0C040;
-    --white: #F0F4F8;
-    --text-dim: #5A7A95;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg-deep); color:var(--white); font-family:'Noto Sans TC',sans-serif; min-height:100vh; }
+:root{
+  --bg-deep:#0D1B2A;--bg-panel:#142231;--bg-card:#1A2D40;--bg-input:#0F1E2D;
+  --border:#2A4055;--border-bright:#3D6080;
+  --steel:#8BA3B8;--steel-light:#A8C0D4;
+  --orange:#E8933A;--orange-dim:#C4762D;
+  --green:#4CAF7A;--red:#E85A4F;--yellow:#F0C040;--white:#F0F4F8;--dim:#5A7A95;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg-deep);color:var(--white);font-family:'Noto Sans TC',sans-serif;min-height:100vh;}
 
-  header { background:var(--bg-panel); border-bottom:1px solid var(--border); padding:14px 28px; display:flex; align-items:center; gap:16px; }
-  .header-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.15em; color:var(--bg-deep); background:var(--orange); padding:4px 8px; border-radius:2px; }
-  header h1 { font-size:15px; font-weight:500; color:var(--steel-light); letter-spacing:.06em; }
-  .header-right { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
-  #clock { color:var(--orange); }
+header{background:var(--bg-panel);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;}
+.hbadge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.15em;color:var(--bg-deep);background:var(--orange);padding:4px 8px;border-radius:2px;}
+header h1{font-size:15px;font-weight:500;color:var(--steel-light);letter-spacing:.06em;}
+#clock{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);}
 
-  .workspace { display:grid; grid-template-columns:1fr 1fr; height:calc(100vh - 53px); }
-  .editor-panel { border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.workspace{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 53px);}
+.editor{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.preview{display:flex;flex-direction:column;overflow:hidden;}
 
-  .tab-bar { background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; padding:0 16px; gap:2px; overflow-x:auto; scrollbar-width:none; }
-  .tab-bar::-webkit-scrollbar { display:none; }
-  .tab { font-family:'Noto Sans TC',sans-serif; font-size:12px; color:var(--steel); padding:10px 14px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .15s; background:none; border-top:none; border-left:none; border-right:none; }
-  .tab:hover { color:var(--steel-light); }
-  .tab.active { color:var(--orange); border-bottom-color:var(--orange); font-weight:500; }
+.form-area{flex:1;overflow-y:auto;padding:16px 18px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.fg{margin-bottom:14px;}
+.fl{font-size:11px;font-weight:500;color:var(--steel);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.fl .req{color:var(--orange);}
+.fl .hint{font-size:10px;color:var(--dim);text-transform:none;letter-spacing:0;margin-left:auto;}
+input[type=text],textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--white);font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:7px 10px;outline:none;resize:vertical;transition:border-color .15s;}
+input[type=text]:focus,textarea:focus{border-color:var(--border-bright);}
+input::placeholder,textarea::placeholder{color:var(--dim);font-size:12px;}
+textarea{min-height:60px;}
 
-  .form-area { flex:1; overflow-y:auto; padding:20px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
-  .template-section { display:none; }
-  .template-section.active { display:block; }
+.pills{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:none;color:var(--steel);transition:all .15s;white-space:nowrap;}
+.pill:hover{border-color:var(--border-bright);}
+.pill.sel-info{border-color:#4A90C4;color:#4A90C4;background:rgba(74,144,196,.12);}
+.pill.sel-warn{border-color:var(--yellow);color:var(--yellow);background:rgba(240,192,64,.1);}
+.pill.sel-normal{border-color:var(--green);color:var(--green);background:rgba(76,175,122,.1);}
 
-  .field-group { margin-bottom:16px; }
-  .field-label { font-size:11px; font-weight:500; color:var(--steel); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .field-label .required { color:var(--orange); }
-  .field-label .hint { font-size:10px; color:var(--text-dim); text-transform:none; letter-spacing:0; margin-left:auto; }
+.tr{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.ty{width:52px;text-align:center;}
+.tmo{width:44px;text-align:center;}
+.td{width:44px;text-align:center;}
+.tt{width:58px;text-align:center;}
+.lbl{font-size:13px;color:var(--steel);}
 
-  input[type="text"], textarea, select { width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; color:var(--white); font-family:'Noto Sans TC',sans-serif; font-size:13px; padding:8px 12px; transition:border-color .15s; outline:none; resize:vertical; }
-  input[type="text"]:focus, textarea:focus { border-color:var(--border-bright); }
-  input::placeholder, textarea::placeholder { color:var(--text-dim); font-size:12px; }
-  textarea { min-height:72px; }
+.escrow{display:flex;align-items:flex-start;gap:7px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:7px;margin-bottom:7px;}
+.esctag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);min-width:26px;padding-top:2px;}
+.escfields{flex:1;display:flex;flex-direction:column;gap:5px;}
+.escfields input{background:var(--bg-input);font-size:12px;}
+.iactions{display:flex;flex-direction:column;gap:3px;}
 
-  /* time row */
-  .time-row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
-  .time-row .lbl { color:var(--steel); font-size:13px; white-space:nowrap; }
-  .time-row input { text-align:center; padding:8px 6px; }
-  .t-y  { width:56px!important; }
-  .t-mo { width:46px!important; }
-  .t-d  { width:46px!important; }
-  .t-t  { width:60px!important; }
+.btn-icon{background:none;border:1px solid var(--border);border-radius:3px;color:var(--steel);cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;}
+.btn-icon:hover{border-color:var(--border-bright);color:var(--white);}
+.btn-icon.del:hover{border-color:var(--red);color:var(--red);}
+.btn-add{background:none;border:1px dashed var(--border-bright);border-radius:4px;color:var(--steel);font-size:12px;font-family:'Noto Sans TC',sans-serif;padding:6px 14px;cursor:pointer;width:100%;transition:all .15s;}
+.btn-add:hover{border-color:var(--orange);color:var(--orange);}
 
-  /* escort */
-  .escort-row { display:flex; gap:8px; align-items:flex-start; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; padding:8px; margin-bottom:8px; }
-  .escort-tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--orange); min-width:30px; padding-top:9px; user-select:none; text-align:center; }
-  .escort-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
-  .escort-fields input { background:var(--bg-card); font-size:12px; border:1px solid var(--border); border-radius:4px; color:var(--white); font-family:'Noto Sans TC',sans-serif; padding:7px 10px; outline:none; }
-  .escort-fields input:focus { border-color:var(--border-bright); }
-  .escort-fields input::placeholder { color:var(--text-dim); font-size:11px; }
+.restore-box{background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;padding:12px;margin-bottom:14px;}
+.restore-label{font-size:11px;font-weight:600;color:var(--orange);letter-spacing:.06em;margin-bottom:6px;}
 
-  /* items */
-  .items-container { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
-  .item-row { display:flex; align-items:flex-start; gap:8px; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; padding:8px; }
-  .item-num { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--orange); min-width:22px; padding-top:2px; user-select:none; }
-  .item-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
-  .item-fields input { background:var(--bg-card); font-size:12px; border:1px solid var(--border); border-radius:4px; color:var(--white); font-family:'Noto Sans TC',sans-serif; padding:7px 10px; outline:none; }
-  .item-fields input:focus { border-color:var(--border-bright); }
-  .item-row-actions { display:flex; flex-direction:column; gap:4px; padding-top:2px; }
+.sv-modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.sv-mode-lbl{font-size:11px;color:var(--dim);}
+.sv-stat{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);}
+.svp-label{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 5px;display:flex;align-items:center;gap:8px;}
+.svp-label span{color:var(--orange);font-family:'JetBrains Mono',monospace;}
+.svp-cat{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;margin-bottom:5px;overflow:hidden;}
+.svp-cat-h{background:var(--bg-card);padding:5px 10px;font-size:12px;color:var(--orange);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;}
+.svp-cat-h .cnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);}
+.svp-items{padding:5px 10px;display:flex;flex-direction:column;gap:2px;}
+.svp-item{font-size:12px;color:var(--steel-light);padding:2px 0;border-bottom:1px solid var(--border);}
+.svp-item:last-child{border-bottom:none;}
 
-  .btn-icon { background:none; border:1px solid var(--border); border-radius:3px; color:var(--steel); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; }
-  .btn-icon:hover { border-color:var(--border-bright); color:var(--white); }
-  .btn-icon.del:hover { border-color:var(--red); color:var(--red); }
-  .btn-icon.up:hover,.btn-icon.dn:hover { border-color:var(--orange); color:var(--orange); }
-  .btn-add { background:none; border:1px dashed var(--border-bright); border-radius:4px; color:var(--steel); font-size:12px; font-family:'Noto Sans TC',sans-serif; padding:7px 14px; cursor:pointer; width:100%; transition:all .15s; }
-  .btn-add:hover { border-color:var(--orange); color:var(--orange); }
+.foot{background:var(--bg-panel);border-top:1px solid var(--border);padding:11px 18px;display:flex;gap:8px;}
+.btn-gen{background:var(--orange);color:var(--bg-deep);border:none;border-radius:4px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 22px;cursor:pointer;transition:background .15s;}
+.btn-gen:hover{background:var(--orange-dim);}
+.btn-clr{background:none;border:1px solid var(--border);border-radius:4px;color:var(--steel);font-size:12px;font-family:'Noto Sans TC',sans-serif;padding:9px 14px;cursor:pointer;transition:all .15s;}
+.btn-clr:hover{border-color:var(--border-bright);color:var(--white);}
 
-  /* pills */
-  .status-group { display:flex; gap:8px; flex-wrap:wrap; }
-  .status-pill { font-size:11px; padding:5px 12px; border-radius:20px; border:1px solid var(--border); cursor:pointer; transition:all .15s; background:none; color:var(--steel); }
-  .status-pill:hover { border-color:var(--border-bright); }
-  .status-pill.selected-normal  { border-color:var(--green);  color:var(--green);  background:rgba(76,175,122,.1); }
-  .status-pill.selected-warning { border-color:var(--yellow); color:var(--yellow); background:rgba(240,192,64,.1); }
-  .status-pill.selected-danger  { border-color:var(--red);    color:var(--red);    background:rgba(232,90,79,.1); }
-  .status-pill.selected-info    { border-color:var(--orange); color:var(--orange); background:rgba(232,147,58,.1); }
+.prev-head{background:var(--bg-panel);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;}
+.prev-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);letter-spacing:.12em;}
+.prev-title span{color:var(--green);}
+.btn-copy{margin-left:auto;background:none;border:1px solid var(--border-bright);border-radius:4px;color:var(--steel-light);font-size:11px;font-family:'JetBrains Mono',monospace;padding:5px 12px;cursor:pointer;transition:all .15s;}
+.btn-copy:hover,.btn-copy.copied{border-color:var(--green);color:var(--green);}
+.prev-body{flex:1;overflow-y:auto;padding:20px;}
+.prev-out{font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:var(--white);white-space:pre-wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:18px 22px;min-height:160px;}
+.prev-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--dim);}
+.prev-empty .icon{font-size:30px;opacity:.4;}
 
-  .editor-footer { background:var(--bg-panel); border-top:1px solid var(--border); padding:12px 20px; display:flex; gap:10px; align-items:center; }
-  .btn-generate { background:var(--orange); color:var(--bg-deep); border:none; border-radius:4px; font-family:'Noto Sans TC',sans-serif; font-size:13px; font-weight:700; padding:9px 24px; cursor:pointer; transition:background .15s; }
-  .btn-generate:hover { background:var(--orange-dim); }
-  .btn-clear { background:none; border:1px solid var(--border); border-radius:4px; color:var(--steel); font-size:12px; font-family:'Noto Sans TC',sans-serif; padding:9px 16px; cursor:pointer; transition:all .15s; }
-  .btn-clear:hover { border-color:var(--border-bright); color:var(--white); }
-
-  .preview-panel { display:flex; flex-direction:column; overflow:hidden; }
-  .preview-header { background:var(--bg-panel); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:10px; }
-  .preview-title { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--steel); letter-spacing:.12em; }
-  .preview-title span { color:var(--green); }
-  .btn-copy { margin-left:auto; background:none; border:1px solid var(--border-bright); border-radius:4px; color:var(--steel-light); font-size:11px; font-family:'JetBrains Mono',monospace; padding:5px 14px; cursor:pointer; transition:all .15s; letter-spacing:.06em; }
-  .btn-copy:hover,.btn-copy.copied { border-color:var(--green); color:var(--green); }
-  .preview-body { flex:1; overflow-y:auto; padding:24px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
-  .preview-output { font-family:'Noto Sans TC',sans-serif; font-size:14px; line-height:1.8; color:var(--white); white-space:pre-wrap; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:20px 24px; min-height:200px; }
-  .preview-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:12px; color:var(--text-dim); }
-  .preview-empty .icon { font-size:32px; opacity:.4; }
-  .preview-empty p { font-size:13px; letter-spacing:.04em; }
-
-  ::-webkit-scrollbar { width:5px; height:5px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-  @media(max-width:768px){ .workspace{grid-template-columns:1fr;} .preview-panel{height:400px;} }
-
-  /* ── Supervise: parse preview ── */
-  .sv-mode-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
-  .sv-mode-label { font-size:11px; color:var(--text-dim); white-space:nowrap; }
-  .sv-stat { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--orange); white-space:nowrap; }
-  .sv-preview-label { font-size:10px; color:var(--text-dim); letter-spacing:.06em; margin:8px 0 6px; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
-  .sv-preview-label span { color:var(--orange); font-family:'JetBrains Mono',monospace; }
-  .sv-cat-preview { background:var(--bg-input); border:1px solid var(--border); border-radius:4px; margin-bottom:6px; overflow:hidden; }
-  .sv-cat-preview-header { background:var(--bg-card); padding:6px 10px; font-size:12px; color:var(--orange); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; }
-  .sv-cat-preview-header .cat-count { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); }
-  .sv-cat-preview-items { padding:6px 10px; display:flex; flex-direction:column; gap:3px; }
-  .sv-cat-preview-item { font-size:12px; color:var(--steel-light); padding:2px 0; border-bottom:1px solid var(--border); }
-  .sv-cat-preview-item:last-child { border-bottom:none; }
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+@media(max-width:768px){.workspace{grid-template-columns:1fr;}.preview{height:400px;}}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="header-badge">RPT</div>
-  <h1>回報模板產生器</h1>
-  <div class="header-right"><span id="clock"></span></div>
+  <div class="hbadge">RPT</div>
+  <h1>督導回報產生器</h1>
+  <div id="clock"></div>
 </header>
-
 <div class="workspace">
-<div class="editor-panel">
-  <div class="tab-bar">
-    <button class="tab active" data-tab="supervise">督導回報</button>
-    <button class="tab" data-tab="inspect">視導回報</button>
-    <button class="tab" data-tab="fault">故障回報</button>
-    <button class="tab" data-tab="mobile">機動回報</button>
-    <button class="tab" data-tab="situation">狀況回報</button>
-  </div>
 
+<!-- ── 左側表單 ── -->
+<div class="editor">
   <div class="form-area">
 
-    <!-- ①督導回報 -->
-    <div class="template-section active" id="tpl-supervise">
-      <!-- 貼入全文回復 -->
-      <div class="field-group" style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;padding:12px;">
-        <div class="field-label" style="color:var(--orange);">貼入全文回復
-          <span class="hint" style="color:var(--text-dim);">貼上上次回報內容，自動帶入所有欄位</span>
+    <div class="restore-box">
+      <div class="restore-label">貼入全文回復</div>
+      <textarea id="sv-restore" placeholder="貼入上次督導回報全文，自動解析還原所有欄位…" style="min-height:64px;" oninput="svRestore()"></textarea>
+    </div>
+
+    <div class="fg"><div class="fl">回報單位 <span class="req">*</span></div>
+      <input id="sv-unit" list="sv-unit-hl" placeholder="直接輸入數字，如：000" autocomplete="off">
+      <datalist id="sv-unit-hl"></datalist></div>
+
+    <div class="fg"><div class="fl">受督導單位 <span class="req">*</span></div>
+      <input id="sv-target" list="sv-target-hl" placeholder="直接輸入數字，如：000-0" autocomplete="off">
+      <datalist id="sv-target-hl"></datalist></div>
+
+    <div class="fg"><div class="fl">駐地</div>
+      <input id="sv-place" list="sv-place-hl" placeholder="例：縣市+駐地" autocomplete="off">
+      <datalist id="sv-place-hl"></datalist></div>
+
+    <div class="fg"><div class="fl">任務名稱 <span class="req">*</span></div>
+      <input id="sv-mission" placeholder="例：OO督導"></div>
+
+    <div class="fg"><div class="fl">報別</div>
+      <div class="pills" id="sv-stage">
+        <button class="pill sel-info" data-v="初報" data-col="info">初報</button>
+        <button class="pill" data-v="續報" data-col="warn">續報</button>
+        <button class="pill" data-v="終報" data-col="normal">終報</button>
+      </div></div>
+
+    <div class="fg"><div class="fl">到達時間 <span class="req">*</span></div>
+      <div class="tr">
+        <input class="ty" id="sv-ay" placeholder="000"><span class="lbl">年</span>
+        <input class="tmo" id="sv-amo" placeholder="00"><span class="lbl">月</span>
+        <input class="td" id="sv-ad" placeholder="00"><span class="lbl">日</span>
+        <input class="tt" id="sv-at" placeholder="0000"><span class="lbl">時</span>
+      </div></div>
+
+    <div class="fg"><div class="fl">離開時間 <span class="hint">初報可留空</span></div>
+      <div class="tr">
+        <input class="ty" id="sv-dy" placeholder="000"><span class="lbl">年</span>
+        <input class="tmo" id="sv-dmo" placeholder="00"><span class="lbl">月</span>
+        <input class="td" id="sv-dd" placeholder="00"><span class="lbl">日</span>
+        <input class="tt" id="sv-dt" placeholder="0000"><span class="lbl">時</span>
+      </div></div>
+
+    <div class="fg"><div class="fl">督導長官 <span class="req">*</span></div>
+      <input id="sv-insp" placeholder="例：職稱＋OOO＋階級"></div>
+
+    <div class="fg"><div class="fl">督導長官人數 <span class="hint">留空不顯示</span></div>
+      <input id="sv-insp-cnt" placeholder="例：3"></div>
+
+    <div class="fg"><div class="fl">陪同人員 <span class="hint">多單位可新增分層</span></div>
+      <div id="sv-esc"></div>
+      <button class="btn-add" onclick="addEsc()">＋ 新增陪同單位</button></div>
+
+    <div class="fg">
+      <div class="sv-modebar">
+        <span class="sv-mode-lbl">輸出模式：</span>
+        <div class="pills" id="sv-mode">
+          <button class="pill sel-info" data-v="normal" data-col="info">正常版</button>
+          <button class="pill" data-v="brief" data-col="warn">精簡版</button>
         </div>
-        <textarea id="sv-paste-restore" placeholder="將督導回報全文貼入此處，系統自動解析還原所有欄位…" style="min-height:72px;" oninput="svParseRestore()"></textarea>
+        <span class="sv-stat" id="sv-stat">－</span>
       </div>
-      <div class="field-group">
-        <div class="field-label">回報單位 <span class="required">*</span></div>
-        <input type="text" id="sv-unit" placeholder="直接輸入數字，如：000" list="sv-unit-hl" autocomplete="off">
-        <datalist id="sv-unit-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">受督導單位 <span class="required">*</span></div>
-        <input type="text" id="sv-target" placeholder="直接輸入數字，如：000-0" list="sv-target-hl" autocomplete="off">
-        <datalist id="sv-target-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">駐地</div>
-        <input type="text" id="sv-place" placeholder="例：縣市+駐地" list="sv-place-hl" autocomplete="off">
-        <datalist id="sv-place-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">任務名稱 <span class="required">*</span></div>
-        <input type="text" id="sv-mission" placeholder="例：OO督導">
-      </div>
-      <div class="field-group">
-        <div class="field-label">報別</div>
-        <div class="status-group" id="sv-stageGroup">
-          <button class="status-pill selected-info"    data-val="初報" data-color="info">初報</button>
-          <button class="status-pill"                  data-val="續報" data-color="warning">續報</button>
-          <button class="status-pill"                  data-val="終報" data-color="normal">終報</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">到達時間 <span class="required">*</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="sv-arr-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="sv-arr-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="sv-arr-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="sv-arr-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">離開時間 <span class="hint">初報可留空</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="sv-dep-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="sv-dep-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="sv-dep-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="sv-dep-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">督導長官 <span class="required">*</span></div>
-        <input type="text" id="sv-insp-title" placeholder="例：職稱＋OOO＋階級">
-      </div>
-      <div class="field-group">
-        <div class="field-label">督導長官人數 <span class="hint">留空則不顯示</span></div>
-        <input type="text" id="sv-insp-count" placeholder="例：3">
-      </div>
-      <div class="field-group">
-        <div class="field-label">陪同人員 <span class="hint">單一單位直接填；多單位可新增分層</span></div>
-        <div id="sv-escort-container"></div>
-        <button class="btn-add" onclick="addEscortRow('sv')">＋ 新增陪同單位</button>
-      </div>
-      <div class="field-group">
-        <div class="field-label">所見情形
-          <span class="hint">終報使用；初/續報自動帶入預設文字</span>
-        </div>
-        <div class="sv-mode-bar">
-          <span class="sv-mode-label">輸出模式：</span>
-          <div class="status-group" id="sv-modeGroup">
-            <button class="status-pill selected-info" data-val="normal" data-color="info">正常版</button>
-            <button class="status-pill" data-val="brief" data-color="warning">精簡版</button>
-          </div>
-          <span class="sv-stat" id="sv-stat">－</span>
-        </div>
-        <textarea id="sv-obs" placeholder="直接貼入各員工提供的內容，格式不限，系統自動辨識類別與項目。
+      <div class="fl">所見情形 <span class="hint">終報貼入，自動辨識類別與項目</span></div>
+      <textarea id="sv-obs" placeholder="直接貼上各員工提供內容，格式不限，系統自動辨識類別與項目。
 
 支援混貼，例如：
 （一）OO類：
 1、項目內容
-2、項目內容
 
 一、OO類：
-（一）項目內容
-（二）項目內容" style="min-height:180px;" oninput="svPreview()"></textarea>
-        <div id="sv-preview-box" style="display:none;">
-          <div class="sv-preview-label">解析預覽 <span id="sv-preview-stat"></span></div>
-          <div id="sv-preview-content"></div>
-        </div>
+（一）項目內容" style="min-height:160px;" oninput="svPreview()"></textarea>
+      <div id="sv-prev-box" style="display:none;">
+        <div class="svp-label">解析預覽 <span id="sv-prev-stat"></span></div>
+        <div id="sv-prev-content"></div>
       </div>
     </div>
 
-    <!-- ②視導回報 -->
-    <div class="template-section" id="tpl-inspect">
-      <div class="field-group">
-        <div class="field-label">回報單位 <span class="required">*</span></div>
-        <input type="text" id="p-unit" placeholder="直接輸入數字，如：000" list="p-unit-hl" autocomplete="off">
-        <datalist id="p-unit-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">受視導單位 <span class="required">*</span></div>
-        <input type="text" id="p-target" placeholder="直接輸入數字，如：000-0" list="p-target-hl" autocomplete="off">
-        <datalist id="p-target-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">駐地</div>
-        <input type="text" id="p-place" placeholder="例：縣市+駐地" list="p-place-hl" autocomplete="off">
-        <datalist id="p-place-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">任務名稱 <span class="required">*</span></div>
-        <input type="text" id="p-mission" placeholder="例：OO視導">
-      </div>
-      <div class="field-group">
-        <div class="field-label">報別</div>
-        <div class="status-group" id="p-stageGroup">
-          <button class="status-pill selected-info"    data-val="初報" data-color="info">初報</button>
-          <button class="status-pill"                  data-val="續報" data-color="warning">續報</button>
-          <button class="status-pill"                  data-val="終報" data-color="normal">終報</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">到達時間 <span class="required">*</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="p-arr-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="p-arr-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="p-arr-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="p-arr-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">離開時間 <span class="hint">初報可留空</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="p-dep-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="p-dep-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="p-dep-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="p-dep-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">視導長官 <span class="required">*</span></div>
-        <input type="text" id="p-insp-title" placeholder="例：職稱＋OOO＋階級">
-      </div>
-      <div class="field-group">
-        <div class="field-label">視導長官人數 <span class="hint">留空則不顯示</span></div>
-        <input type="text" id="p-insp-count" placeholder="例：3">
-      </div>
-      <div class="field-group">
-        <div class="field-label">陪同人員 <span class="hint">單一單位直接填；多單位可新增分層</span></div>
-        <div id="p-escort-container"></div>
-        <button class="btn-add" onclick="addEscortRow('p')">＋ 新增陪同單位</button>
-      </div>
-      <div class="field-group">
-        <div class="field-label">所見情形 <span class="hint">可直接貼入多項，自動加編號</span></div>
-        <textarea id="p-obs" placeholder="直接貼上或逐行輸入，換行即一項。若已含一、二…則原樣保留。" style="min-height:140px;"></textarea>
-      </div>
-    </div>
-
-    <!-- ③故障回報 -->
-    <div class="template-section" id="tpl-fault">
-      <!-- 貼入全文回復 -->
-      <div class="field-group" style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;padding:12px;">
-        <div class="field-label" style="color:var(--orange);">貼入全文回復
-          <span class="hint" style="color:var(--text-dim);">貼上上次回報內容，自動帶入所有欄位</span>
-        </div>
-        <textarea id="ft-paste-restore" placeholder="將上次產生的故障回報全文貼入此處，系統自動解析還原所有欄位…" style="min-height:80px;" oninput="ftParseRestore()"></textarea>
-      </div>
-      <div class="field-group">
-        <div class="field-label">回報單位 <span class="required">*</span></div>
-        <input type="text" id="ft-unit" placeholder="直接輸入數字，如：000" list="ft-unit-hl" autocomplete="off">
-        <datalist id="ft-unit-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">故障單位 <span class="required">*</span></div>
-        <input type="text" id="ft-target" placeholder="直接輸入數字，如：000-0" list="ft-target-hl" autocomplete="off">
-        <datalist id="ft-target-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">駐地</div>
-        <input type="text" id="ft-place" placeholder="例：縣市+駐地" list="ft-place-hl" autocomplete="off">
-        <datalist id="ft-place-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">裝備名稱 <span class="required">*</span></div>
-        <input type="text" id="ft-equip" placeholder="例：OO裝備">
-      </div>
-      <div class="field-group">
-        <div class="field-label">裝備序號</div>
-        <input type="text" id="ft-serial" placeholder="例：OOO">
-      </div>
-      <div class="field-group">
-        <div class="field-label">報別</div>
-        <div class="status-group" id="ft-stageGroup">
-          <button class="status-pill selected-info"  data-val="初報" data-color="info">初報</button>
-          <button class="status-pill" data-val="續報" data-color="warning">續報</button>
-          <button class="status-pill" data-val="終報" data-color="normal">終報</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">故障時間 <span class="required">*</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="ft-arr-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="ft-arr-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="ft-arr-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="ft-arr-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">故障等級</div>
-        <div class="status-group" id="ft-levelGroup">
-          <button class="status-pill selected-warning" data-val="主件故障" data-color="warning">主件故障</button>
-          <button class="status-pill" data-val="系統故障" data-color="danger">系統故障</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">表定戰備</div>
-        <div class="status-group" id="ft-readyGroup">
-          <button class="status-pill selected-info"    data-val="機動（營內）" data-color="info">機動（營內）</button>
-          <button class="status-pill" data-val="機動（營外）" data-color="info">機動（營外）</button>
-          <button class="status-pill" data-val="立即"   data-color="warning">立即</button>
-          <button class="status-pill" data-val="保養"   data-color="normal">保養</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">故障原因</div>
-        <textarea id="ft-cause" placeholder="輸入故障原因…" style="min-height:60px;"></textarea>
-      </div>
-      <div class="field-group" id="ft-etr-group">
-        <div class="field-label">預計修復時間 <span class="hint" id="ft-etr-hint">初報自動帶入故障時間+4h（11碼）</span></div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="text" id="ft-etr" placeholder="自動產生，可手動修改" style="flex:1;font-family:'JetBrains Mono',monospace;">
-          <button class="status-pill" id="ft-etr-unknown" data-val="unknown" data-color="danger"
-            onclick="ftToggleEtr(this)" style="white-space:nowrap;height:34px;">ETR不明</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">處置情形 <span class="hint">每次回報可新增，自動累計項次</span></div>
-        <div class="items-container" id="ft-actions"></div>
-        <button class="btn-add" onclick="addItem('ft-action')">＋ 新增處置</button>
-      </div>
-    </div>
-
-    <!-- ④機動回報 -->
-    <div class="template-section" id="tpl-mobile">
-      <div class="field-group">
-        <div class="field-label">回報單位 <span class="required">*</span></div>
-        <input type="text" id="mb-unit" placeholder="直接輸入數字，如：000" list="mb-unit-hl" autocomplete="off">
-        <datalist id="mb-unit-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">執行單位 <span class="required">*</span></div>
-        <input type="text" id="mb-target" placeholder="直接輸入數字，如：000-0" list="mb-target-hl" autocomplete="off">
-        <datalist id="mb-target-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">駐地</div>
-        <input type="text" id="mb-place" placeholder="例：縣市+駐地" list="mb-place-hl" autocomplete="off">
-        <datalist id="mb-place-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">任務名稱 <span class="required">*</span></div>
-        <input type="text" id="mb-mission" placeholder="例：OO機動">
-      </div>
-      <div class="field-group">
-        <div class="field-label">報別</div>
-        <div class="status-group" id="mb-stageGroup">
-          <button class="status-pill selected-info"    data-val="初報" data-color="info">初報</button>
-          <button class="status-pill"                  data-val="續報" data-color="warning">續報</button>
-          <button class="status-pill"                  data-val="終報" data-color="normal">終報</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">出發時間 <span class="required">*</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="mb-arr-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="mb-arr-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="mb-arr-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="mb-arr-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">抵達時間 <span class="hint">終報時填寫</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="mb-dep-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="mb-dep-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="mb-dep-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="mb-dep-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">帶隊長官</div>
-        <input type="text" id="mb-insp-title" placeholder="例：職稱＋OOO＋階級">
-      </div>
-      <div class="field-group">
-        <div class="field-label">帶隊長官人數 <span class="hint">留空則不顯示</span></div>
-        <input type="text" id="mb-insp-count" placeholder="例：3">
-      </div>
-      <div class="field-group">
-        <div class="field-label">陪同人員 <span class="hint">單一單位直接填；多單位可新增分層</span></div>
-        <div id="mb-escort-container"></div>
-        <button class="btn-add" onclick="addEscortRow('mb')">＋ 新增陪同單位</button>
-      </div>
-      <div class="field-group">
-        <div class="field-label">所見情形 <span class="hint">可直接貼入多項，自動加編號</span></div>
-        <textarea id="mb-obs" placeholder="直接貼上或逐行輸入，換行即一項。若已含一、二…則原樣保留。" style="min-height:140px;"></textarea>
-      </div>
-    </div>
-
-    <!-- ⑤狀況回報 -->
-    <div class="template-section" id="tpl-situation">
-      <div class="field-group">
-        <div class="field-label">回報單位 <span class="required">*</span></div>
-        <input type="text" id="st-unit" placeholder="直接輸入數字，如：000" list="st-unit-hl" autocomplete="off">
-        <datalist id="st-unit-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">狀況發生單位 <span class="required">*</span></div>
-        <input type="text" id="st-target" placeholder="直接輸入數字，如：000-0" list="st-target-hl" autocomplete="off">
-        <datalist id="st-target-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">駐地</div>
-        <input type="text" id="st-place" placeholder="例：縣市+駐地" list="st-place-hl" autocomplete="off">
-        <datalist id="st-place-hl"></datalist>
-      </div>
-      <div class="field-group">
-        <div class="field-label">任務名稱 <span class="required">*</span></div>
-        <input type="text" id="st-mission" placeholder="例：OO狀況">
-      </div>
-      <div class="field-group">
-        <div class="field-label">報別</div>
-        <div class="status-group" id="st-stageGroup">
-          <button class="status-pill selected-info"    data-val="初報" data-color="info">初報</button>
-          <button class="status-pill"                  data-val="續報" data-color="warning">續報</button>
-          <button class="status-pill"                  data-val="終報" data-color="normal">終報</button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">發生時間 <span class="required">*</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="st-arr-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="st-arr-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="st-arr-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="st-arr-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">結束時間 <span class="hint">初報可留空</span></div>
-        <div class="time-row">
-          <input class="t-y"  type="text" id="st-dep-y"  placeholder="000"><span class="lbl">年</span>
-          <input class="t-mo" type="text" id="st-dep-mo" placeholder="00"><span class="lbl">月</span>
-          <input class="t-d"  type="text" id="st-dep-d"  placeholder="00"><span class="lbl">日</span>
-          <input class="t-t"  type="text" id="st-dep-t"  placeholder="0000"><span class="lbl">時</span>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">回報人員</div>
-        <input type="text" id="st-person" placeholder="例：職稱＋OOO＋階級">
-      </div>
-      <div class="field-group">
-        <div class="field-label">陪同人員 <span class="hint">單一單位直接填；多單位可新增分層</span></div>
-        <div id="st-escort-container"></div>
-        <button class="btn-add" onclick="addEscortRow('st')">＋ 新增陪同單位</button>
-      </div>
-      <div class="field-group">
-        <div class="field-label">所見情形 <span class="hint">可直接貼入多項，自動加編號</span></div>
-        <textarea id="st-obs" placeholder="描述狀況經過、已採取作為、後續建議等，換行即一項。" style="min-height:140px;"></textarea>
-      </div>
-    </div>
-
-  </div><!-- /form-area -->
-
-  <div class="editor-footer">
-    <button class="btn-generate" onclick="generate()">產生回報</button>
-    <button class="btn-clear" onclick="clearForm()">清除</button>
   </div>
-</div><!-- /editor-panel -->
-
-<div class="preview-panel">
-  <div class="preview-header">
-    <div class="preview-title">OUTPUT <span>▮</span></div>
-    <button class="btn-copy" id="copyBtn" onclick="copyOutput()">複製全文</button>
+  <div class="foot">
+    <button class="btn-gen" onclick="generate()">產生回報</button>
+    <button class="btn-clr" onclick="clearForm()">清除</button>
   </div>
-  <div class="preview-body">
-    <div id="previewEmpty" class="preview-empty">
+</div>
+
+<!-- ── 右側預覽 ── -->
+<div class="preview">
+  <div class="prev-head">
+    <div class="prev-title">OUTPUT <span>▮</span></div>
+    <button class="btn-copy" id="copyBtn" onclick="copyOut()">複製全文</button>
+  </div>
+  <div class="prev-body">
+    <div id="prevEmpty" class="prev-empty">
       <div class="icon">📋</div>
       <p>填寫左側欄位後點擊「產生回報」</p>
     </div>
-    <div id="previewOutput" class="preview-output" style="display:none;"></div>
+    <div id="prevOut" class="prev-out" style="display:none;"></div>
   </div>
 </div>
+
 </div><!-- /workspace -->
 
 <script>
+'use strict';
+
 // ── Clock ──
-function updateClock() {
-  const n = new Date(), p = v => String(v).padStart(2,'0');
-  document.getElementById('clock').textContent =
+function tick(){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clock').textContent=
     `${n.getFullYear()}/${p(n.getMonth()+1)}/${p(n.getDate())}  ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
 }
-updateClock(); setInterval(updateClock, 1000);
+tick(); setInterval(tick,1000);
 
-// ── Tabs ──
-let currentTemplate = 'supervise';
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    document.querySelectorAll('.template-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('tpl-' + tab.dataset.tab).classList.add('active');
-    currentTemplate = tab.dataset.tab;
+// ── Pills ──
+document.addEventListener('click',e=>{
+  const pill=e.target.closest('.pill'); if(!pill) return;
+  const grp=pill.closest('.pills'); if(!grp) return;
+  grp.querySelectorAll('.pill').forEach(p=>p.className='pill');
+  pill.classList.add('sel-'+(pill.dataset.col||'info'));
+  if(grp.id==='sv-mode') setTimeout(svPreview,30);
+});
+function getPill(id){
+  const g=document.getElementById(id); if(!g) return '';
+  const s=g.querySelector('.pill[class*="sel-"]'); return s?s.dataset.v:'';
+}
+function setPill(id,val){
+  const g=document.getElementById(id); if(!g) return;
+  g.querySelectorAll('.pill').forEach(p=>{
+    p.className='pill';
+    if(p.dataset.v===val) p.classList.add('sel-'+(p.dataset.col||'info'));
   });
-});
-
-// ── Pills (event delegation) ──
-document.addEventListener('click', e => {
-  const pill = e.target.closest('.status-pill');
-  if (!pill) return;
-  const group = pill.closest('.status-group');
-  if (!group) return;
-  // Skip ETR button (handled separately)
-  if (pill.id === 'ft-etr-unknown') return;
-  group.querySelectorAll('.status-pill').forEach(p => p.className = 'status-pill');
-  pill.classList.add('selected-' + pill.dataset.color);
-  // 報別切換時更新 ETR 欄位顯示
-  if (group.id === 'ft-stageGroup') setTimeout(ftUpdateEtrVisibility, 10);
-});
-
-// ── Auto-format: 回報單位（數字→第N旅）──
-const UNIT_IDS = ['sv-unit','p-unit','ft-unit','mb-unit','st-unit'];
-const TARGET_IDS = ['sv-target','p-target','ft-target','mb-target','st-target'];
-
-function fmtUnit(val) {
-  const v = val.trim();
-  // 純數字 or 數字+英文字母 → 第N旅
-  if (/^\d+[a-zA-Z]?$/.test(v)) return `第${v}旅`;
-  return v;
 }
 
-function fmtTarget(val) {
-  const v = val.trim();
-  // 格式：000-0 或 000-00 → 第000營第0連
-  const m = v.match(/^(\d+)-(\d+)$/);
-  if (m) return `第${m[1]}營第${m[2]}連`;
-  return v;
+// ── History ──
+const HK='rpt_sv_hist';
+function loadHist(){try{return JSON.parse(localStorage.getItem(HK)||'{}')}catch{return{}}}
+function saveHist(k,v){
+  if(!v||v==='（未填）') return;
+  const h=loadHist(); if(!h[k]) h[k]=[];
+  if(!h[k].includes(v)){h[k].unshift(v);h[k]=h[k].slice(0,10);}
+  try{localStorage.setItem(HK,JSON.stringify(h))}catch{}
+  refreshDL(k);
 }
-
-UNIT_IDS.forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('blur', () => { el.value = fmtUnit(el.value); });
-  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') el.value = fmtUnit(el.value); });
-});
-
-TARGET_IDS.forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('blur', () => { el.value = fmtTarget(el.value); });
-  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') el.value = fmtTarget(el.value); });
-});
-
-// ── Fault: ETR auto-calculate ──
-// 故障時間任一欄位變更時，自動計算 ETR（+4小時，11碼）
-['ft-arr-y','ft-arr-mo','ft-arr-d','ft-arr-t'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', ftAutoEtr);
-});
-
-function ftAutoEtr() {
-  const etrBtn = document.getElementById('ft-etr-unknown');
-  // 若已選 ETR不明，不自動填
-  if (etrBtn?.classList.contains('selected-danger')) return;
-  const stage = getPill(document.getElementById('ft-stageGroup'));
-  if (stage === '終報') return;
-
-  const y  = parseInt(document.getElementById('ft-arr-y').value) || 0;
-  const mo = parseInt(document.getElementById('ft-arr-mo').value) || 0;
-  const d  = parseInt(document.getElementById('ft-arr-d').value) || 0;
-  const t  = document.getElementById('ft-arr-t').value.trim();
-  if (!y || !mo || !d || t.length < 3) { document.getElementById('ft-etr').value = ''; return; }
-
-  // 解析時間（民國轉西元）
-  const yearAD = y + 1911;
-  const hhmm = t.padStart(4,'0');
-  const hh = parseInt(hhmm.slice(0,2));
-  const mm = parseInt(hhmm.slice(2,4));
-  const dt = new Date(yearAD, mo-1, d, hh, mm);
-  dt.setHours(dt.getHours() + 4);
-
-  // 輸出11碼：YYMMDDhhmm（民國年2碼）
-  const rY  = String(dt.getFullYear() - 1911).padStart(3,'0');
-  const rMo = String(dt.getMonth()+1).padStart(2,'0');
-  const rD  = String(dt.getDate()).padStart(2,'0');
-  const rH  = String(dt.getHours()).padStart(2,'0');
-  const rM  = String(dt.getMinutes()).padStart(2,'0');
-  document.getElementById('ft-etr').value = `${rY}${rMo}${rD}${rH}${rM}`;
+function refreshDL(k){
+  const dl=document.getElementById(k+'-hl'); if(!dl) return;
+  dl.innerHTML=(loadHist()[k]||[]).map(v=>`<option value="${v}">`).join('');
 }
+['sv-unit','sv-target','sv-place'].forEach(refreshDL);
 
-// ── Fault: ETR 顯示/隱藏（終報隱藏）──
-function ftUpdateEtrVisibility() {
-  const stage = getPill(document.getElementById('ft-stageGroup'));
-  const grp = document.getElementById('ft-etr-group');
-  if (grp) grp.style.display = (stage === '終報') ? 'none' : '';
-}
+// ── Auto-format ──
+function fmtUnit(v){v=v.trim();return /^\d+$/.test(v)?`第${v}旅`:v;}
+function fmtTarget(v){v=v.trim();const m=v.match(/^(\d+)-(\d+)$/);return m?`第${m[1]}營第${m[2]}連`:v;}
+document.addEventListener('blur',e=>{
+  const el=e.target;
+  if(el.id==='sv-unit') el.value=fmtUnit(el.value);
+  if(el.id==='sv-target') el.value=fmtTarget(el.value);
+},true);
 
-
-
-// ── Unit History ──
-const HIST_KEY = 'rpt_unit_history_v2';
-function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY)||'{}'); } catch { return {}; } }
-function saveHist(fieldId, val) {
-  if (!val || val.startsWith('（')) return;
-  const h = loadHist();
-  if (!h[fieldId]) h[fieldId] = [];
-  if (!h[fieldId].includes(val)) { h[fieldId].unshift(val); h[fieldId] = h[fieldId].slice(0,10); }
-  try { localStorage.setItem(HIST_KEY, JSON.stringify(h)); } catch {}
-  refreshDL(fieldId);
-}
-function refreshDL(fieldId) {
-  const dl = document.getElementById(fieldId + '-hl');
-  if (!dl) return;
-  const h = loadHist();
-  dl.innerHTML = (h[fieldId]||[]).map(v => `<option value="${v}">`).join('');
-}
-// init all datalists
-['sv-unit','sv-target','sv-place','p-unit','p-target','p-place',
- 'ft-unit','ft-target','ft-place','mb-unit','mb-target','mb-place',
- 'st-unit','st-target','st-place'].forEach(refreshDL);
-
-// ── Escort rows ──
-function addEscortRow(prefix, unit='', personnel='') {
-  const container = document.getElementById(prefix + '-escort-container');
-  const idx = container.querySelectorAll('.escort-row').length + 1;
-  const zh = ['一','二','三','四','五','六','七','八','九','十'];
-  const isFirst = idx === 1;
-  const tag = isFirst ? '—' : `(${zh[idx-1]||idx})`;
-  const unitPH = isFirst ? '單位（多單位時填，單一可留空）' : '單位';
-  const row = document.createElement('div'); row.className = 'escort-row';
-  row.innerHTML = `
-    <div class="escort-tag">${tag}</div>
-    <div class="escort-fields">
-      <input type="text" class="escort-unit" placeholder="${unitPH}" value="${unit}">
-      <input type="text" class="escort-personnel" placeholder="人員，例：職稱＋OOO＋階級" value="${personnel}">
+// ── Escort ──
+function addEsc(unit='',person=''){
+  const c=document.getElementById('sv-esc');
+  const idx=c.querySelectorAll('.escrow').length;
+  const zh=['一','二','三','四','五','六','七','八','九','十'];
+  const isFirst=idx===0;
+  const row=document.createElement('div'); row.className='escrow';
+  row.innerHTML=`
+    <div class="esctag">${isFirst?'—':'('+( zh[idx]||idx+1)+')'}</div>
+    <div class="escfields">
+      <input placeholder="${isFirst?'單位（多單位時填，單一可留空）':'單位'}" value="${unit}">
+      <input placeholder="人員，例：職稱＋OOO＋階級" value="${person}">
     </div>
-    <div class="item-row-actions">
-      <button class="btn-icon up" onclick="moveEscort(this,'up','${prefix}')">↑</button>
-      <button class="btn-icon dn" onclick="moveEscort(this,'dn','${prefix}')">↓</button>
-      <button class="btn-icon del" onclick="removeEscort(this,'${prefix}')">✕</button>
+    <div class="iactions">
+      <button class="btn-icon" onclick="mvEsc(this,'up')">↑</button>
+      <button class="btn-icon" onclick="mvEsc(this,'dn')">↓</button>
+      <button class="btn-icon del" onclick="rmEsc(this)">✕</button>
     </div>`;
-  container.appendChild(row);
-  renumEscort(prefix);
+  c.appendChild(row); renumEsc();
 }
-function removeEscort(btn, prefix) { btn.closest('.escort-row').remove(); renumEscort(prefix); }
-function moveEscort(btn, dir, prefix) {
-  const row = btn.closest('.escort-row'), c = row.parentElement;
-  if (dir==='up' && row.previousElementSibling) c.insertBefore(row, row.previousElementSibling);
-  else if (dir==='dn' && row.nextElementSibling) c.insertBefore(row.nextElementSibling, row);
-  renumEscort(prefix);
+function rmEsc(btn){btn.closest('.escrow').remove();renumEsc();}
+function mvEsc(btn,dir){
+  const r=btn.closest('.escrow'),c=r.parentElement;
+  if(dir==='up'&&r.previousElementSibling) c.insertBefore(r,r.previousElementSibling);
+  else if(dir==='dn'&&r.nextElementSibling) c.insertBefore(r.nextElementSibling,r);
+  renumEsc();
 }
-function renumEscort(prefix) {
-  const zh = ['一','二','三','四','五','六','七','八','九','十'];
-  const rows = document.querySelectorAll(`#${prefix}-escort-container .escort-row`);
-  const multi = rows.length > 1;
-  rows.forEach((row, i) => {
-    row.querySelector('.escort-tag').textContent = multi ? `(${zh[i]||i+1})` : '—';
-    row.querySelector('.escort-unit').placeholder = multi ? '單位' : '單位（多單位時填，單一可留空）';
+function renumEsc(){
+  const zh=['一','二','三','四','五','六','七','八','九','十'];
+  const rows=document.querySelectorAll('#sv-esc .escrow');
+  const multi=rows.length>1;
+  rows.forEach((r,i)=>{
+    r.querySelector('.esctag').textContent=multi?`(${zh[i]||i+1})`:'—';
+    r.querySelector('input').placeholder=multi?'單位':'單位（多單位時填，單一可留空）';
   });
 }
-// init one escort per template
-['sv','p','mb','st'].forEach(px => addEscortRow(px));
-
-// ── Dynamic simple items (ft-action) ──
-const itemConfigs = {
-  'ft-action': { container: 'ft-actions' },
-};
-function addItem(key, val='') {
-  const cfg = itemConfigs[key];
-  if (!cfg) return;
-  const container = document.getElementById(cfg.container);
-  const idx = container.querySelectorAll('.item-row').length + 1;
-  const row = document.createElement('div');
-  row.className = 'item-row';
-  row.innerHTML = `
-    <div class="item-num">${idx}.</div>
-    <div class="item-fields">
-      <textarea class="item-main" placeholder="輸入處置內容…" rows="2">${val}</textarea>
-    </div>
-    <div class="item-row-actions">
-      <button class="btn-icon up" onclick="moveItem(this,'up','${key}')">↑</button>
-      <button class="btn-icon dn" onclick="moveItem(this,'dn','${key}')">↓</button>
-      <button class="btn-icon del" onclick="removeItem(this,'${key}')">✕</button>
-    </div>`;
-  container.appendChild(row);
-}
-function removeItem(btn, key) { btn.closest('.item-row').remove(); renumItems(key); }
-function moveItem(btn, dir, key) {
-  const row = btn.closest('.item-row'), c = row.parentElement;
-  if (dir==='up' && row.previousElementSibling) c.insertBefore(row, row.previousElementSibling);
-  else if (dir==='dn' && row.nextElementSibling) c.insertBefore(row.nextElementSibling, row);
-  renumItems(key);
-}
-function renumItems(key) {
-  const cfg = itemConfigs[key]; if (!cfg) return;
-  document.getElementById(cfg.container).querySelectorAll('.item-num').forEach((el,i) => el.textContent = `${i+1}.`);
-}
-// init default action item
-addItem('ft-action');
-
-// ── ETR toggle ──
-function ftToggleEtr(btn) {
-  const etrInput = document.getElementById('ft-etr');
-  const isActive = btn.classList.contains('selected-danger');
-  if (isActive) {
-    // 關閉 ETR不明：先移除 class，再計算
-    btn.classList.remove('selected-danger');
-    etrInput.disabled = false;
-    etrInput.value = '';
-    // 稍微延遲確保 class 已移除再計算
-    setTimeout(ftAutoEtr, 0);
-  } else {
-    btn.classList.add('selected-danger');
-    etrInput.disabled = true;
-    etrInput.value = 'ETR不明';
+function escBlock(){
+  const rows=document.querySelectorAll('#sv-esc .escrow');
+  const zh=['一','二','三','四','五','六','七','八','九','十'];
+  if(rows.length<=1){
+    const u=rows[0]?rows[0].querySelectorAll('input')[0].value.trim():'';
+    const p=rows[0]?rows[0].querySelectorAll('input')[1].value.trim():'';
+    const combo=u&&p?`${u}：${p}`:(p||u);
+    return `三、陪同人員：${combo}陪同。`;
   }
-}
-
-// ── Fault: Parse & Restore from pasted report text ──
-function ftParseRestore() {
-  const raw = document.getElementById('ft-paste-restore').value;
-  if (!raw.trim()) return;
-
-  // 1. 統一半形→全形括號，移除行尾句號干擾
-  const txt = raw.replace(/\(/g,'（').replace(/\)/g,'）');
-
-  // 2. 回報單位
-  const unitM = txt.match(/^(.+?)報告：/m);
-  if (unitM) setVal('ft-unit', unitM[1].trim());
-
-  // 3. 案緣：允許「壹、案緣：」後換行，擷取到「貳、」或「說明：」前
-  //    同時相容貼入文有無「貳」字
-  const yuanBlock = txt.match(/壹、案緣：[\s\n]*([\s\S]+?)(?=\n+(?:貳、|說明：))/);
-  if (yuanBlock) {
-    const body = yuanBlock[1].replace(/\n/g,' ').trim();
-
-    // 報別：最後一個（...）裡含「初報/續報/終報」
-    const stageM = body.match(/[（(]([^）)]*(?:初報|續報|終報)[^）)]*)[\）)]/);
-    if (stageM) {
-      const stageRaw = stageM[1];
-      const stage = stageRaw.includes('初報') ? '初報' : stageRaw.includes('終報') ? '終報' : '續報';
-      setPill('ft-stageGroup', stage);
-      ftUpdateEtrVisibility();
-    }
-
-    // 去掉「本屬」前綴和末尾「故障案（...）」
-    const innerM = body.match(/本屬(.+?)(?:故障案|$)/);
-    if (innerM) {
-      let inner = innerM[1].trim();
-
-      // 受故障單位：以軍事層級詞結尾（連/營/旅/隊/部）
-      const tgtM = inner.match(/^(第\S+?(?:連|營|旅|隊|部))/);
-      if (tgtM) {
-        setVal('ft-target', tgtM[1]);
-        inner = inner.slice(tgtM[1].length).trim();
-      }
-
-      // 駐地：緊接的（...）或 (...) ← 已轉全形
-      const placeM = inner.match(/^[（(]([^）)]+)[）)]\s*/);
-      if (placeM) {
-        setVal('ft-place', placeM[1].trim());
-        inner = inner.slice(placeM[0].length).trim();
-      }
-
-      // 剩下：裝備名稱（序號）或純裝備名稱
-      const lastParenM = inner.match(/^([\s\S]+?)(?:[（(]([^）)]+)[）)])?$/);
-      if (lastParenM) {
-        const equipName = lastParenM[1].trim().replace(/[。.]\s*$/, '');
-        const possibleSerial = (lastParenM[2] || '').replace(/[。.]\s*$/, '').trim();
-        const isSerialLike = possibleSerial && /[A-Za-z0-9\-_]/.test(possibleSerial);
-        if (equipName) setVal('ft-equip', equipName);
-        if (isSerialLike) setVal('ft-serial', possibleSerial);
-      }
-    }
-  }
-
-  // 4. 故障時間（行尾句號不影響，因只取數字）
-  const timeM = txt.match(/[ㄧ一]、故障時間：(\d+)年(\d+)月(\d+)日(\d+)時/);
-  if (timeM) {
-    setVal('ft-arr-y',  timeM[1]);
-    setVal('ft-arr-mo', timeM[2]);
-    setVal('ft-arr-d',  timeM[3]);
-    setVal('ft-arr-t',  timeM[4]);
-  }
-
-  // 5. 故障等級（去句號）
-  const levelM = txt.match(/二、故障等級：([^。\n]+)/);
-  if (levelM) setPill('ft-levelGroup', levelM[1].trim());
-
-  // 6. 表定戰備（去句號）
-  const readyM = txt.match(/三、表定戰備：([^。\n]+)/);
-  if (readyM) {
-    const rs = readyM[1].trim();
-    let pillVal = '保養';
-    if (rs.includes('機動') && rs.includes('營內')) pillVal = '機動（營內）';
-    else if (rs.includes('機動') && rs.includes('營外')) pillVal = '機動（營外）';
-    else if (rs.includes('立即')) pillVal = '立即';
-    else if (rs.includes('保養')) pillVal = '保養';
-    setPill('ft-readyGroup', pillVal);
-  }
-
-  // 7. 故障原因（去句號）
-  const causeM = txt.match(/四、故障原因：([^\n]+)/);
-  if (causeM) setVal('ft-cause', causeM[1].replace(/[。.]\s*$/, '').trim());
-
-  // 8. 裝備序號（去句號，補強案緣沒解析到的情況）
-  const serialM = txt.match(/五、裝備序號：([^\n]+)/);
-  if (serialM) {
-    const sv = serialM[1].replace(/[。.]\s*$/, '').trim();
-    if (sv && sv !== '（未填）') {
-      setVal('ft-serial', sv); // 五、的值為準，覆蓋案緣解析
-    }
-  }
-
-  // 9. 預計修復時間（去句號）
-  const etrM = txt.match(/六、預計修復時間：([^\n]+)/);
-  const etrBtn   = document.getElementById('ft-etr-unknown');
-  const etrInput = document.getElementById('ft-etr');
-  if (etrM) {
-    const etrVal = etrM[1].replace(/[。.]\s*$/, '').trim();
-    if (etrVal === 'ETR不明') {
-      etrBtn.classList.add('selected-danger');
-      etrInput.disabled = true;
-      etrInput.value = 'ETR不明';
-    } else {
-      etrBtn.classList.remove('selected-danger');
-      etrInput.disabled = false;
-      setVal('ft-etr', etrVal);
-    }
-  } else {
-    etrBtn.classList.remove('selected-danger');
-    etrInput.disabled = false;
-    etrInput.value = '';
-  }
-
-  // 10. 處置情形
-  const sanM = txt.match(/參、處置情形：\n?([\s\S]+?)(?=\n肆、|$)/);
-  if (sanM) {
-    const skipPhrases = ['賡續掌握故障情形後報。','處置情形彙整中。'];
-    const actions = sanM[1].split('\n')
-      .map(l => l.trim())
-      .filter(l => /^[一二三四五六七八九十\d]/.test(l))
-      .map(l => l.replace(/^[一二三四五六七八九十\d]+[、.]/, '').replace(/[。.]\s*$/, '').trim())
-      .filter(l => l && !skipPhrases.includes(l));
-
-    const container = document.getElementById('ft-actions');
-    container.innerHTML = '';
-    if (actions.length > 0) {
-      actions.forEach(a => addItem('ft-action', a));
-    } else {
-      addItem('ft-action');
-    }
-  }
-}
-
-function setVal(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.value = val;
-}
-
-function setPill(groupId, val) {
-  const group = document.getElementById(groupId);
-  if (!group) return;
-  group.querySelectorAll('.status-pill').forEach(p => {
-    p.className = 'status-pill';
-    if (p.dataset.val === val) p.classList.add('selected-' + p.dataset.color);
-  });
-}
-
-
-
-// ── Helpers ──
-const zhNums = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
-
-function getPill(groupEl) {
-  if (!groupEl) return '';
-  const sel = groupEl.querySelector('.status-pill[class*="selected-"]');
-  return sel ? sel.dataset.val : '';
-}
-
-function timeStr(prefix, fieldA) {
-  const y  = document.getElementById(`${prefix}-${fieldA}-y`).value.trim();
-  const mo = document.getElementById(`${prefix}-${fieldA}-mo`).value.trim();
-  const d  = document.getElementById(`${prefix}-${fieldA}-d`).value.trim();
-  const t  = document.getElementById(`${prefix}-${fieldA}-t`).value.trim();
-  return { y, mo, d, t, filled: !!(y||mo||d||t),
-    str: `${y||'000'}年${mo||'00'}月${d||'00'}日${t||'0000'}時` };
-}
-
-function escortBlock(prefix, label='三、陪同人員') {
-  const rows = document.querySelectorAll(`#${prefix}-escort-container .escort-row`);
-  if (rows.length <= 1) {
-    const u = rows[0]?.querySelector('.escort-unit').value.trim()||'';
-    const p = rows[0]?.querySelector('.escort-personnel').value.trim()||'';
-    const combined = (u && p) ? `${u}：${p}` : (p||u);
-    return `${label}：${combined}陪同。`;
-  }
-  const zh = ['一','二','三','四','五','六','七','八','九','十'];
-  let s = `${label}：\n`;
-  rows.forEach((row, i) => {
-    const u = row.querySelector('.escort-unit').value.trim();
-    const p = row.querySelector('.escort-personnel').value.trim();
-    const lb = `（${zh[i]||i+1}）`;
-    if (u && p) s += `${lb}${u}：${p}。\n`;
-    else if (u) s += `${lb}${u}。\n`;
-    else if (p) s += `${lb}${p}。\n`;
+  let s=`三、陪同人員：\n`;
+  rows.forEach((r,i)=>{
+    const u=r.querySelectorAll('input')[0].value.trim();
+    const p=r.querySelectorAll('input')[1].value.trim();
+    if(u&&p) s+=`（${zh[i]||i+1}）${u}：${p}。\n`;
+    else if(p) s+=`（${zh[i]||i+1}）${p}。\n`;
   });
   return s.trimEnd();
 }
+addEsc();
 
-function obsBlock(obsRaw, stage, initMsg='賡續掌握情形後報。', pendingMsg='情形彙整中。') {
-  if (stage === '初報') return initMsg;
-  if (stage === '續報') return obsRaw || pendingMsg;
-  if (!obsRaw) return pendingMsg;
-  const lines = obsRaw.split('\n').map(l => l.trim()).filter(l => l);
-  const hasNum = /^[一二三四五六七八九十ㄧ\d]/.test(lines[0]);
-  return (lines.length === 1 || hasNum) ? lines.join('\n') : lines.map((l, i) => `${zhNums[i]||i+1}、${l}`).join('\n');
-}
+// ── svParse / svPreview ──
+const ZH=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+function zhN(i){return ZH[i]||String(i+1);}
 
-// ── Supervise: paste-and-parse ──
-const zhCat = ['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
-
-// 判斷一行是否為「類別標題行」
-// 規則：
-//   A. 行首是中文數字編號（一、二、）+ 文字 → 大類標題
-//   B. 行首是括號+中文/數字（（一）、(一)）+ 文字 → 子類標題
-//   C. 行首是純數字+點/頓號（1. 1、）+ 文字 → 項目（非類別）
-//   D. 壹貳參肆…的章節行不算類別
-function svIsCatLine(line) {
-  const t = line.trim();
-  if (!t) return false;
-  // 排除章節行（壹貳參肆伍陸）
-  if (/^[壹貳參肆伍陸柒捌玖拾]、/.test(t)) return false;
-  // 排除純數字開頭的項目行（1. 1、 (1) （1））
-  if (/^[\（\(]?\d+[\）\)][^一二三四五六七八九十]/.test(t)) return false;
-  if (/^\d+[、.．]/.test(t)) return false;
-  // 中文數字開頭（一、二、…）→ 類別
-  if (/^[一二三四五六七八九十]+[、]/.test(t)) return true;
-  // 括號+中文或數字開頭（（一）、(一)、（1）、(1)）→ 子類別
-  if (/^[\（\(][一二三四五六七八九十\d]+[\）\)]/.test(t)) return true;
+function svIsCat(t){
+  if(!t||/^[壹貳參肆伍陸]、/.test(t)) return false;
+  if(/^\d+[、.．]/.test(t)) return false;
+  if(/^[\（\(]?\d+[\）\)]/.test(t)&&!/[：:]/.test(t)) return false;
+  if(/^[一二三四五六七八九十]+[、]/.test(t)) return true;
+  if(/^[\（\(][一二三四五六七八九十\d]+[\）\)]/.test(t)) return true;
   return false;
 }
+function svExtractCat(t){return t.replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/,'').replace(/[：:]\s*$/,'').trim();}
+function svExtractItem(t){return t.replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.\s]+/,'').trim();}
 
-// 從類別標題行提取純類名
-function svExtractCatName(line) {
-  return line.trim()
-    .replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/, '')
-    .replace(/[：:]\s*$/, '')
-    .trim();
-}
-
-// 從項目行提取純內容
-function svExtractItem(line) {
-  return line.trim()
-    .replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.\s]+/, '')
-    .replace(/[：:]\s*$/, '')
-    .trim();
-}
-
-// 解析貼入的混雜文字 → [{name, items}]
-function svParse(raw) {
-  if (!raw.trim()) return [];
-  // 過濾掉章節標題行（壹貳參肆…、已循…）
-  const sectionPat = /^[壹貳參肆伍陸]、|^肆、|^已循/;
-  const lines = raw.split('\n').filter(l => !sectionPat.test(l.trim()));
-  const cats = [];
-  let currentCat = null;
-
-  // 判斷是否為有編號的項目行（含空白項目如 "1." "2."）
-  function isItemLine(t) {
-    return /^[\（\(]?\d+[\）\)、.．]/.test(t) && !svIsCatLine(t);
-  }
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    if (svIsCatLine(trimmed)) {
-      currentCat = { name: svExtractCatName(trimmed), items: [] };
-      cats.push(currentCat);
-    } else if (currentCat) {
-      if (isItemLine(trimmed)) {
-        // 有編號的行無論內容是否為空都計為一項
-        const content = svExtractItem(trimmed);
-        currentCat.items.push(content || '（待填）');
-      } else {
-        const item = svExtractItem(trimmed);
-        if (item) currentCat.items.push(item);
-      }
+function svParse(raw){
+  if(!raw.trim()) return [];
+  const secPat=/^[壹貳參肆伍陸]、|^肆、|^已循/;
+  const lines=raw.split('\n').filter(l=>!secPat.test(l.trim()));
+  const cats=[]; let cur=null;
+  const isItem=t=>/^[\（\(]?\d+[\）\)、.．]/.test(t)&&!svIsCat(t);
+  for(const line of lines){
+    const t=line.trim(); if(!t) continue;
+    if(svIsCat(t)){cur={name:svExtractCat(t),items:[]};cats.push(cur);}
+    else if(cur){
+      const content=isItem(t)?(svExtractItem(t)||'（待填）'):svExtractItem(t);
+      if(content||isItem(t)) cur.items.push(content||'（待填）');
     }
   }
-  // 有名稱且有至少一個項目（含待填）才保留
-  return cats.filter(c => c.name && c.items.length > 0);
+  return cats.filter(c=>c.name&&c.items.length>0);
 }
 
-// 即時顯示解析預覽
-function svPreview() {
-  const raw = document.getElementById('sv-obs').value;
-  const cats = svParse(raw);
-  const box = document.getElementById('sv-preview-box');
-  const content = document.getElementById('sv-preview-content');
-  const stat = document.getElementById('sv-preview-stat');
-  const svStat = document.getElementById('sv-stat');
-
-  if (!raw.trim() || cats.length === 0) {
-    box.style.display = 'none';
-    svStat.textContent = '－';
+function svPreview(){
+  const raw=document.getElementById('sv-obs').value;
+  const cats=svParse(raw);
+  const box=document.getElementById('sv-prev-box');
+  if(!raw.trim()||!cats.length){
+    box.style.display='none';
+    document.getElementById('sv-stat').textContent='－';
     return;
   }
-
-  const totalItems = cats.reduce((s, c) => s + c.items.length, 0);
-  stat.textContent = `${cats.length}類 ${totalItems}項`;
-  svStat.textContent = `${cats.length}類 ${totalItems}項`;
-
-  content.innerHTML = cats.map((cat, i) => `
-    <div class="sv-cat-preview">
-      <div class="sv-cat-preview-header">
-        <span>（${zhCat[i]||i+1}）${cat.name}</span>
-        <span class="cat-count">${cat.items.length}項</span>
-      </div>
-      ${cat.items.length ? `<div class="sv-cat-preview-items">${cat.items.map((it,j)=>`<div class="sv-cat-preview-item">${j+1}、${it}</div>`).join('')}</div>` : ''}
+  const total=cats.reduce((s,c)=>s+c.items.length,0);
+  document.getElementById('sv-prev-stat').textContent=`${cats.length}類 ${total}項`;
+  document.getElementById('sv-stat').textContent=`${cats.length}類 ${total}項`;
+  document.getElementById('sv-prev-content').innerHTML=cats.map((cat,i)=>`
+    <div class="svp-cat">
+      <div class="svp-cat-h"><span>（${ZH[i]||i+1}）${cat.name}</span><span class="cnt">${cat.items.length}項</span></div>
+      <div class="svp-items">${cat.items.map((it,j)=>`<div class="svp-item">${j+1}、${it}</div>`).join('')}</div>
     </div>`).join('');
-
-  box.style.display = 'block';
+  box.style.display='block';
 }
 
-// Also trigger preview when mode changes
-document.addEventListener('click', e => {
-  if (e.target.closest('#sv-modeGroup')) setTimeout(svPreview, 50);
-});
+// ── Time helper ──
+function tStr(ay,amo,ad,at){
+  const y=document.getElementById(ay).value.trim();
+  const mo=document.getElementById(amo).value.trim();
+  const d=document.getElementById(ad).value.trim();
+  const t=document.getElementById(at).value.trim();
+  return{str:`${y||'000'}年${mo||'0'}月${d||'00'}日${t||'0000'}時`,filled:!!(y||mo||d||t),y,mo,d,t};
+}
 
-// ── Supervise: Parse & Restore from pasted full report ──
-function svParseRestore() {
-  const raw = document.getElementById('sv-paste-restore').value;
-  if (!raw.trim()) return;
+// ── Restore ──
+function svRestore(){
+  const raw=document.getElementById('sv-restore').value; if(!raw.trim()) return;
+  const txt=raw.replace(/\(/g,'（').replace(/\)/g,'）');
 
-  const txt = raw.replace(/\(/g, '（').replace(/\)/g, '）');
+  // 單位
+  const unitM=txt.match(/^(.+?)報告：/m);
+  if(unitM) setv('sv-unit',unitM[1].trim());
 
-  // ── 1. 回報單位
-  const unitM = txt.match(/^(.+?)報告：/m);
-  if (unitM) setVal('sv-unit', unitM[1].trim());
-
-  // ── 2. 案緣block（允許案緣後換行）
-  const yuanBlock = txt.match(/壹、案緣：[\s\n]*([\s\S]+?)(?=\n+(?:貳、|說明：))/);
-  if (yuanBlock) {
-    const body = yuanBlock[1].replace(/\n/g, ' ').trim();
-
+  // 案緣
+  const yb=txt.match(/壹、案緣：[\s\n]*([\s\S]+?)(?=\n+(?:貳、|說明：))/);
+  if(yb){
+    const body=yb[1].replace(/\n/g,' ').trim();
     // 報別
-    const stageM = body.match(/[（(]([^）)]*(?:初報|續報|終報)[^）)]*)[）)]/);
-    if (stageM) {
-      const s = stageM[1];
-      setPill('sv-stageGroup', s.includes('初') ? '初報' : s.includes('終') ? '終報' : '續報');
-    }
-
-    // 本屬 → 案（ 之間的內容
-    const innerM = body.match(/本屬([\s\S]+?)(?:案[（(]|$)/);
-    if (innerM) {
-      let inner = innerM[1].replace(/\n/g, ' ').trim();
-
-      // target：貪婪匹配最長的軍事單位（支援「第X營第X連」）
-      // 策略：取到第一個（）或「接受」前的軍事單位字串
-      // 軍事單位結尾詞：連、排、班、營、旅、師、隊、部、群
-      const tgtM = inner.match(/^((?:第\S+?(?:連|排|班|營|旅|師|隊|部|群))+)/);
-      if (tgtM) {
-        setVal('sv-target', tgtM[1]);
-        inner = inner.slice(tgtM[1].length).trim();
-      }
-
-      // 駐地
-      const placeM = inner.match(/^（([^）]*)）\s*/);
-      if (placeM) {
-        setVal('sv-place', placeM[1].trim());
-        inner = inner.slice(placeM[0].length).trim();
-      }
-
-      // 「接受」後 = 督導官 + 任務
-      const acceptM = inner.match(/接受(.+?)$/);
-      if (acceptM) {
-        const afterAccept = acceptM[1].trim();
-        const rankPat = /上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長/;
-        if (rankPat.test(afterAccept)) {
-          const rankM = afterAccept.match(/^(.+?(?:上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長))\s*(.*)$/);
-          if (rankM) {
-            setVal('sv-insp-title', rankM[1].trim());
-            if (rankM[2].trim()) setVal('sv-mission', rankM[2].trim());
-          }
-        } else {
-          setVal('sv-mission', afterAccept);
-        }
+    const sm=body.match(/[（(]([^）)]*(?:初報|續報|終報)[^）)]*)[）)]/);
+    if(sm){const s=sm[1];setPill('sv-stage',s.includes('初')?'初報':s.includes('終')?'終報':'續報');}
+    // 本屬...案
+    const im=body.match(/本屬([\s\S]+?)(?:案[（(]|$)/);
+    if(im){
+      let inner=im[1].replace(/\n/g,' ').trim();
+      const tgtM=inner.match(/^((?:第\S+?(?:連|排|班|營|旅|師|隊|部|群))+)/);
+      if(tgtM){setv('sv-target',tgtM[1]);inner=inner.slice(tgtM[1].length).trim();}
+      const plM=inner.match(/^（([^）]*)）\s*/);
+      if(plM){setv('sv-place',plM[1].trim());inner=inner.slice(plM[0].length).trim();}
+      const acM=inner.match(/接受(.+?)$/);
+      if(acM){
+        const after=acM[1].trim();
+        const rp=/上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長/;
+        if(rp.test(after)){
+          const rm=after.match(/^(.+?(?:上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長))\s*(.*)$/);
+          if(rm){setv('sv-insp',rm[1].trim());if(rm[2].trim())setv('sv-mission',rm[2].trim());}
+        } else setv('sv-mission',after);
       }
     }
   }
 
-  // ── 3. 督導官／督導長官：二、XXX：OOO等N員（去掉尾部句號）
-  const inspLineM = txt.match(/二、[^：\n]{0,12}：([^\n]+)/);
-  if (inspLineM) {
-    const inspFull = inspLineM[1].trim().replace(/[。.]\s*$/, '');
-    const cntM = inspFull.match(/等(\d+)員/);
-    if (cntM) {
-      setVal('sv-insp-count', cntM[1]);
-      setVal('sv-insp-title', inspFull.replace(/等\d+員.*$/, '').trim());
-    } else {
-      setVal('sv-insp-title', inspFull);
-    }
+  // 督導長官（二、）
+  const iM=txt.match(/二、[^：\n]{0,12}：([^\n]+)/);
+  if(iM){
+    const v=iM[1].trim().replace(/[。.]\s*$/,'');
+    const cM=v.match(/等(\d+)員/);
+    if(cM){setv('sv-insp-cnt',cM[1]);setv('sv-insp',v.replace(/等\d+員.*$/,'').trim());}
+    else setv('sv-insp',v);
   }
 
-  // ── 4. 時間
-  const timeM = txt.match(/一、時間：(\d+)年(\d+)月(\d+)日(\d+)時/);
-  if (timeM) {
-    setVal('sv-arr-y', timeM[1]); setVal('sv-arr-mo', timeM[2]);
-    setVal('sv-arr-d', timeM[3]); setVal('sv-arr-t', timeM[4]);
-  }
-  // 離開：「至XXXX時」或「並於XXX年…時離開」
-  const depSimple = txt.match(/至(\d{3,4})時(?:結束|離開|離連)/);
-  if (depSimple) {
-    // 只有時，沿用到達年月日
-    setVal('sv-dep-y',  timeM?.[1]||''); setVal('sv-dep-mo', timeM?.[2]||'');
-    setVal('sv-dep-d',  timeM?.[3]||''); setVal('sv-dep-t',  depSimple[1]);
-  } else {
-    const depFull = txt.match(/並於(\d+)年(\d+)月(\d+)日(\d+)時(?:離開|離連|結束)/);
-    if (depFull) {
-      setVal('sv-dep-y', depFull[1]); setVal('sv-dep-mo', depFull[2]);
-      setVal('sv-dep-d', depFull[3]); setVal('sv-dep-t',  depFull[4]);
-    }
+  // 時間
+  const tM=txt.match(/一、時間：(\d+)年(\d+)月(\d+)日(\d+)時/);
+  if(tM){setv('sv-ay',tM[1]);setv('sv-amo',tM[2]);setv('sv-ad',tM[3]);setv('sv-at',tM[4]);}
+  // 離開
+  const ds=txt.match(/至(\d{3,4})時(?:結束|離開|離連)/);
+  if(ds){setv('sv-dy',tM?.[1]||'');setv('sv-dmo',tM?.[2]||'');setv('sv-dd',tM?.[3]||'');setv('sv-dt',ds[1]);}
+  else{
+    const df=txt.match(/並於(\d+)年(\d+)月(\d+)日(\d+)時(?:離開|離連|結束)/);
+    if(df){setv('sv-dy',df[1]);setv('sv-dmo',df[2]);setv('sv-dd',df[3]);setv('sv-dt',df[4]);}
   }
 
-  // ── 5. 陪同人員
-  const escortM = txt.match(/三、陪同人員：([^\n]+)/);
-  if (escortM) {
-    const escortRaw = escortM[1].trim().replace(/[。.]\s*$/, '').replace(/陪同$/, '').trim();
-    const container = document.getElementById('sv-escort-container');
-    container.innerHTML = '';
-    const multiRows = [...escortRaw.matchAll(/（[一二三四五六七八九十\d]+）([^：\n]+)：([^\n]+)/g)];
-    if (multiRows.length > 0) {
-      multiRows.forEach(m => addEscortRow('sv', m[1].trim(), m[2].trim()));
-    } else {
-      addEscortRow('sv', '', escortRaw);
-    }
+  // 陪同人員（三、）
+  const eM=txt.match(/三、陪同人員：([^\n]+)/);
+  if(eM){
+    const raw2=eM[1].trim().replace(/[。.]\s*$/,'').replace(/陪同$/,'').trim();
+    document.getElementById('sv-esc').innerHTML='';
+    const multi=[...raw2.matchAll(/（[一二三四五六七八九十\d]+）([^：\n]+)：([^\n]+)/g)];
+    if(multi.length) multi.forEach(r=>addEsc(r[1].trim(),r[2].trim()));
+    else addEsc('',raw2);
   }
 
-  // ── 6. 參內容（所見情形/處置作為，標題不限）→ 填入 sv-obs
-  const sanM = txt.match(/參、[^：\n]*：\n([\s\S]+?)(?=\n肆、|$)/);
-  if (sanM) {
-    const cleaned = sanM[1]
-      // 去掉統計摘要行，如「二、指揮部督察綜合評鑑所見情形計7項50件，如下所示。」
-      .split('\n')
-      .filter(l => !/^[一二三四五六七八九十]+、.{0,30}(?:計\d+[類項件件]|如後|如下所示)/.test(l.trim()))
-      // 去掉「一、本次督導所見情形計N類N項，摘述如後：」
-      .filter(l => !/本次督導所見情形(?:共)?計\d+/.test(l))
-      .join('\n')
-      .trim();
-    setVal('sv-obs', cleaned);
-    setTimeout(svPreview, 50);
+  // 所見情形（參、）
+  const sM=txt.match(/參、[^：\n]*：\n([\s\S]+?)(?=\n肆、|$)/);
+  if(sM){
+    const cleaned=sM[1].split('\n')
+      .filter(l=>!/本次督導所見情形(?:共)?計\d+/.test(l))
+      .filter(l=>!/^[一二三四五六七八九十]+、.{0,30}(?:計\d+[類項件]|如後|如下所示)/.test(l.trim()))
+      .join('\n').trim();
+    setv('sv-obs',cleaned);
+    setTimeout(svPreview,50);
   }
 }
+function setv(id,v){const el=document.getElementById(id);if(el) el.value=v;}
 
 // ── Generate ──
-function generate() {
-  const tpl = currentTemplate;
-  let out = '';
+function generate(){
+  const unit=document.getElementById('sv-unit').value.trim()||'（未填）';
+  const target=document.getElementById('sv-target').value.trim()||'（未填）';
+  const place=document.getElementById('sv-place').value.trim();
+  const mission=document.getElementById('sv-mission').value.trim()||'OO督導';
+  const stage=getPill('sv-stage');
+  const insp=document.getElementById('sv-insp').value.trim()||'（未填）';
+  const inspCnt=document.getElementById('sv-insp-cnt').value.trim();
+  const mode=getPill('sv-mode');
+  const arr=tStr('sv-ay','sv-amo','sv-ad','sv-at');
+  const dep=tStr('sv-dy','sv-dmo','sv-dd','sv-dt');
+  saveHist('sv-unit',unit);saveHist('sv-target',target);saveHist('sv-place',place);
 
-  if (tpl === 'supervise') {
-    const unit    = document.getElementById('sv-unit').value.trim()||'（未填）';
-    const target  = document.getElementById('sv-target').value.trim()||'（未填）';
-    const place   = document.getElementById('sv-place').value.trim();
-    const mission = document.getElementById('sv-mission').value.trim()||'OO督導';
-    const stage   = getPill(document.getElementById('sv-stageGroup'));
-    const insp    = document.getElementById('sv-insp-title').value.trim()||'（未填）';
-    const inspCnt = document.getElementById('sv-insp-count').value.trim();
-    const mode    = getPill(document.getElementById('sv-modeGroup'));
-    const arr = timeStr('sv','arr'), dep = timeStr('sv','dep');
-    saveHist('sv-unit',unit); saveHist('sv-target',target); saveHist('sv-place',place);
-    const placeStr = place?`（${place}）`:'';
-    const inspStr  = inspCnt?`${insp}等${inspCnt}員`:insp;
-    let tLine = `一、時間：${arr.str}抵達。`;
-    if (dep.filled) tLine = `一、時間：${arr.str}抵達，並於${dep.str}離開。`;
+  const ps=place?`（${place}）`:'';
+  const inspStr=inspCnt?`${insp}等${inspCnt}員`:insp;
+  let tLine=`一、時間：${arr.str}抵達。`;
+  if(dep.filled) tLine=`一、時間：${arr.str}抵達，並於${dep.str}離開。`;
 
-    // 所見情形區塊
-    let obsOut = '';
-    if (stage === '初報') {
-      obsOut = `賡續掌握督導情形後報。`;
-    } else if (stage === '續報') {
-      obsOut = `所見情形彙整中。`;
+  // 所見情形
+  const raw=document.getElementById('sv-obs').value.trim();
+  let obsOut='';
+  if(stage==='初報'){
+    obsOut='賡續掌握督導情形後報。';
+  } else if(stage==='續報'){
+    obsOut='所見情形彙整中。';
+  } else {
+    const cats=svParse(raw);
+    const tc=cats.length,ti=cats.reduce((s,c)=>s+c.items.length,0);
+    if(!tc){
+      obsOut='所見情形彙整中。';
+    } else if(mode==='brief'){
+      obsOut=`一、本次督導所見情形共計${tc}類${ti}項，摘述如後：\n`;
+      cats.forEach((c,i)=>{ obsOut+=`（${ZH[i]||i+1}）${c.name}計${c.items.length}項。\n`; });
+      obsOut=obsOut.trimEnd();
     } else {
-      const raw = document.getElementById('sv-obs').value.trim();
-      const cats = svParse(raw);
-      const totalCats = cats.length;
-      const totalItems = cats.reduce((s, c) => s + c.items.length, 0);
-
-      if (totalCats === 0) {
-        obsOut = `所見情形彙整中。`;
-      } else if (mode === 'brief') {
-        obsOut = `一、本次督導所見情形共計${totalCats}類${totalItems}項，摘述如後：\n`;
-        cats.forEach((cat, i) => {
-          obsOut += `（${zhCat[i]||i+1}）${cat.name}計${cat.items.length}項。\n`;
-        });
-        obsOut = obsOut.trimEnd();
-      } else {
-        obsOut = `一、本次督導所見情形計${totalCats}類${totalItems}項，摘述如後：\n`;
-        cats.forEach((cat, i) => {
-          obsOut += `（${zhCat[i]||i+1}）${cat.name}：\n`;
-          cat.items.forEach((item, j) => { obsOut += `${j+1}、${item}\n`; });
-        });
-        obsOut = obsOut.trimEnd();
-      }
+      obsOut=`一、本次督導所見情形計${tc}類${ti}項，摘述如後：\n`;
+      cats.forEach((c,i)=>{
+        obsOut+=`（${ZH[i]||i+1}）${c.name}：\n`;
+        c.items.forEach((it,j)=>{ obsOut+=`${j+1}、${it}\n`; });
+      });
+      obsOut=obsOut.trimEnd();
     }
-
-    out = `${unit}報告：\n壹、案緣：本屬${target}${placeStr}接受${insp}${mission}案（${stage}）\n貳、說明：\n${tLine}\n二、督導長官：${inspStr}。\n${escortBlock('sv','三、陪同人員')}\n參、所見情形：\n${obsOut}\n肆、已循戰情體系回報。`;
-
-  } else if (tpl === 'inspect') {
-    const unit    = document.getElementById('p-unit').value.trim()||'（未填）';
-    const target  = document.getElementById('p-target').value.trim()||'（未填）';
-    const place   = document.getElementById('p-place').value.trim();
-    const mission = document.getElementById('p-mission').value.trim()||'OO視導';
-    const stage   = getPill(document.getElementById('p-stageGroup'));
-    const insp    = document.getElementById('p-insp-title').value.trim()||'（未填）';
-    const inspCnt = document.getElementById('p-insp-count').value.trim();
-    const obs     = document.getElementById('p-obs').value.trim();
-    const arr = timeStr('p','arr'), dep = timeStr('p','dep');
-    saveHist('p-unit',unit); saveHist('p-target',target); saveHist('p-place',place);
-    const placeStr = place?`（${place}）`:'';
-    const inspStr  = inspCnt?`${insp}等${inspCnt}員`:insp;
-    let tLine = `一、時間：${arr.str}抵達。`;
-    if (dep.filled) tLine = `一、時間：${arr.str}抵達，並於${dep.str}離開。`;
-    out = `${unit}報告：\n壹、案緣：本屬${target}${placeStr}接受${insp}${mission}案（${stage}）\n貳、說明：\n${tLine}\n二、視導長官：${inspStr}。\n${escortBlock('p','三、陪同人員')}\n參、所見情形：\n${obsBlock(obs,stage,'賡續掌握視導情形後報。','所見情形彙整中。')}\n肆、已循戰情體系回報。`;
-
-  } else if (tpl === 'fault') {
-    const unit     = document.getElementById('ft-unit').value.trim()||'（未填）';
-    const target   = document.getElementById('ft-target').value.trim()||'（未填）';
-    const place    = document.getElementById('ft-place').value.trim();
-    const equip    = document.getElementById('ft-equip').value.trim()||'OO裝備';
-    const serial   = document.getElementById('ft-serial').value.trim();
-    const stage    = getPill(document.getElementById('ft-stageGroup'));
-    const level    = getPill(document.getElementById('ft-levelGroup'));
-    const readyRaw = getPill(document.getElementById('ft-readyGroup'));
-    const cause    = document.getElementById('ft-cause').value.trim();
-    const etrVal   = document.getElementById('ft-etr').value.trim();
-    const etrUnknown = document.getElementById('ft-etr-unknown')?.classList.contains('selected-danger');
-    const arr      = timeStr('ft','arr');
-    saveHist('ft-unit',unit); saveHist('ft-target',target); saveHist('ft-place',place);
-
-    const placeStr  = place ? `（${place}）` : '';
-    const equipStr  = serial ? `${equip}（${serial}）` : equip;
-
-    // 表定戰備格式：機動（營內）→ 機動戰備（營內），立即 → 立即戰備
-    let readyStr = readyRaw || '保養';
-    if (readyRaw === '機動（營內）') readyStr = '機動戰備（營內）';
-    else if (readyRaw === '機動（營外）') readyStr = '機動戰備（營外）';
-    else if (readyRaw === '立即') readyStr = '立即戰備';
-    else if (readyRaw === '保養') readyStr = '保養戰備';
-
-    // 案緣報別標示
-    const actionRows = document.querySelectorAll('#ft-actions .item-row');
-    const actionCount = [...actionRows].filter(r => r.querySelector('.item-main')?.value.trim()).length;
-    let stageLabel = stage;
-    if (stage === '續報' && actionCount > 1) {
-      stageLabel = `續報-新增處置情形第${zhNums[actionCount-1]||actionCount}點`;
-    } else if (stage === '終報' && actionCount > 1) {
-      stageLabel = `終報-新增處置情形第${zhNums[actionCount-1]||actionCount}點`;
-    }
-
-    // 貳說明欄（終報不含預計修復時間）
-    let bei = '';
-    bei += `ㄧ、故障時間：${arr.str}\n`;
-    bei += `二、故障等級：${level||'主件故障'}\n`;
-    bei += `三、表定戰備：${readyStr}\n`;
-    bei += `四、故障原因：${cause||'（未填）'}\n`;
-    bei += `五、裝備序號：${serial||'（未填）'}`;
-    if (stage !== '終報') {
-      const etrOut = etrUnknown ? 'ETR不明' : (etrVal || 'ETR不明');
-      bei += `\n六、預計修復時間：${etrOut}`;
-    }
-
-    // 參處置情形
-    const actions = [];
-    actionRows.forEach(r => {
-      const v = r.querySelector('.item-main')?.value.trim();
-      if (v) actions.push(v);
-    });
-    let san = '';
-    if (actions.length === 0) {
-      san = stage === '初報' ? '賡續掌握故障情形後報。' : '處置情形彙整中。';
-    } else {
-      san = actions.map((a, i) => `${zhNums[i]||i+1}、${a}`).join('\n');
-    }
-
-    out = `${unit}報告：\n壹、案緣：本屬${target}${placeStr}${equipStr}故障案（${stageLabel}）\n貳、說明：\n${bei}\n參、處置情形：\n${san}\n肆、已循戰情體系回報。`;
-
-  } else if (tpl === 'mobile') {
-    const unit    = document.getElementById('mb-unit').value.trim()||'（未填）';
-    const target  = document.getElementById('mb-target').value.trim()||'（未填）';
-    const place   = document.getElementById('mb-place').value.trim();
-    const mission = document.getElementById('mb-mission').value.trim()||'OO機動';
-    const stage   = getPill(document.getElementById('mb-stageGroup'));
-    const insp    = document.getElementById('mb-insp-title').value.trim();
-    const inspCnt = document.getElementById('mb-insp-count').value.trim();
-    const obs     = document.getElementById('mb-obs').value.trim();
-    const arr = timeStr('mb','arr'), dep = timeStr('mb','dep');
-    saveHist('mb-unit',unit); saveHist('mb-target',target); saveHist('mb-place',place);
-    const placeStr = place?`（${place}）`:'';
-    let tLine = `一、時間：${arr.str}出發。`;
-    if (dep.filled) tLine = `一、時間：${arr.str}出發，並於${dep.str}抵達。`;
-    let s2 = '';
-    if (insp) { const inspStr = inspCnt?`${insp}等${inspCnt}員`:insp; s2 = `二、帶隊長官：${inspStr}。\n`; }
-    out = `${unit}報告：\n壹、案緣：本屬${target}${placeStr}執行${mission}案（${stage}）\n貳、說明：\n${tLine}\n${s2}${escortBlock('mb','三、陪同人員')}\n參、所見情形：\n${obsBlock(obs,stage,'賡續掌握機動情形後報。','情形彙整中。')}\n肆、已循戰情體系回報。`;
-
-  } else if (tpl === 'situation') {
-    const unit    = document.getElementById('st-unit').value.trim()||'（未填）';
-    const target  = document.getElementById('st-target').value.trim()||'（未填）';
-    const place   = document.getElementById('st-place').value.trim();
-    const mission = document.getElementById('st-mission').value.trim()||'OO狀況';
-    const stage   = getPill(document.getElementById('st-stageGroup'));
-    const person  = document.getElementById('st-person').value.trim();
-    const obs     = document.getElementById('st-obs').value.trim();
-    const arr = timeStr('st','arr'), dep = timeStr('st','dep');
-    saveHist('st-unit',unit); saveHist('st-target',target); saveHist('st-place',place);
-    const placeStr = place?`（${place}）`:'';
-    let tLine = `一、時間：${arr.str}發生。`;
-    if (dep.filled) tLine = `一、時間：${arr.str}發生，並於${dep.str}結束。`;
-    let s2 = person?`二、回報人員：${person}。\n`:'';
-    out = `${unit}報告：\n壹、案緣：本屬${target}${placeStr}發生${mission}案（${stage}）\n貳、說明：\n${tLine}\n${s2}${escortBlock('st','三、陪同人員')}\n參、所見情形：\n${obsBlock(obs,stage,'賡續掌握狀況情形後報。','情形彙整中。')}\n肆、已循戰情體系回報。`;
   }
 
-  document.getElementById('previewEmpty').style.display = 'none';
-  const outEl = document.getElementById('previewOutput');
-  outEl.style.display = 'block';
-  outEl.textContent = out;
+  const out=`${unit}報告：\n壹、案緣：本屬${target}${ps}接受${insp}${mission}案（${stage}）\n貳、說明：\n${tLine}\n二、督導長官：${inspStr}。\n${escBlock()}\n參、所見情形：\n${obsOut}\n肆、已循戰情體系回報。`;
+
+  document.getElementById('prevEmpty').style.display='none';
+  const el=document.getElementById('prevOut');
+  el.style.display='block'; el.textContent=out;
   document.getElementById('copyBtn').classList.remove('copied');
-  document.getElementById('copyBtn').textContent = '複製全文';
+  document.getElementById('copyBtn').textContent='複製全文';
+
+  // 終報離開時間提醒
+  if(stage==='終報'&&!dep.filled){
+    setTimeout(()=>alert('⚠️ 終報提醒：「離開時間」尚未填寫！\n請補充後重新產生回報。'),100);
+  }
 }
 
 // ── Copy ──
-function copyOutput() {
-  const text = document.getElementById('previewOutput').textContent;
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ 已複製'; btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '複製全文'; btn.classList.remove('copied'); }, 2000);
+function copyOut(){
+  const t=document.getElementById('prevOut').textContent; if(!t) return;
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.getElementById('copyBtn');
+    b.textContent='✓ 已複製'; b.classList.add('copied');
+    setTimeout(()=>{b.textContent='複製全文';b.classList.remove('copied');},2000);
   });
 }
 
 // ── Clear ──
-function clearForm() {
-  const tpl = currentTemplate;
-  const section = document.getElementById('tpl-' + tpl);
-  section.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
-  // reset pills
-  section.querySelectorAll('.status-group').forEach(group => {
-    const pills = group.querySelectorAll('.status-pill');
-    pills.forEach(p => p.className = 'status-pill');
-    if (pills[0]) pills[0].classList.add('selected-' + pills[0].dataset.color);
+function clearForm(){
+  document.querySelectorAll('#sv-ay,#sv-amo,#sv-ad,#sv-at,#sv-dy,#sv-dmo,#sv-dd,#sv-dt').forEach(el=>el.value='');
+  ['sv-unit','sv-target','sv-place','sv-mission','sv-insp','sv-insp-cnt','sv-obs','sv-restore'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
   });
-  // reset escort
-  const prefixMap = {supervise:'sv', inspect:'p', mobile:'mb', situation:'st'};
-  const px = prefixMap[tpl];
-  if (px) {
-    document.getElementById(px+'-escort-container').innerHTML = '';
-    addEscortRow(px);
-  }
-  // Reset fault-specific fields
-  if (tpl === 'fault') {
-    document.getElementById('ft-actions').innerHTML = '';
-    addItem('ft-action');
-    const etrBtn = document.getElementById('ft-etr-unknown');
-    if (etrBtn) etrBtn.classList.remove('selected-danger');
-    const etrInput = document.getElementById('ft-etr');
-    if (etrInput) { etrInput.disabled = false; etrInput.value = ''; }
-    const etrGrp = document.getElementById('ft-etr-group');
-    if (etrGrp) etrGrp.style.display = '';
-    const pr = document.getElementById('ft-paste-restore');
-    if (pr) pr.value = '';
-  }
-  // Reset supervise preview
-  if (tpl === 'supervise') {
-    document.getElementById('sv-preview-box').style.display = 'none';
-    document.getElementById('sv-stat').textContent = '－';
-    const pr = document.getElementById('sv-paste-restore');
-    if (pr) pr.value = '';
-  }
-  document.getElementById('previewEmpty').style.display = 'flex';
-  document.getElementById('previewOutput').style.display = 'none';
+  setPill('sv-stage','初報');
+  setPill('sv-mode','normal');
+  document.getElementById('sv-esc').innerHTML=''; addEsc();
+  document.getElementById('sv-prev-box').style.display='none';
+  document.getElementById('sv-stat').textContent='－';
+  document.getElementById('prevEmpty').style.display='flex';
+  document.getElementById('prevOut').style.display='none';
 }
 </script>
 </body>
