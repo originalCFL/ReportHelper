@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>督導回報產生器</title>
+<title>所見情形產生器</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -22,193 +22,129 @@ header h1{font-size:15px;font-weight:500;color:var(--steel-light);letter-spacing
 #clock{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);}
 
 .workspace{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 53px);}
-.editor{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-.preview{display:flex;flex-direction:column;overflow:hidden;}
 
-.form-area{flex:1;overflow-y:auto;padding:16px 18px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
-.fg{margin-bottom:14px;}
-.fl{font-size:11px;font-weight:500;color:var(--steel);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
-.fl .req{color:var(--orange);}
-.fl .hint{font-size:10px;color:var(--dim);text-transform:none;letter-spacing:0;margin-left:auto;}
-input[type=text],textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--white);font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:7px 10px;outline:none;resize:vertical;transition:border-color .15s;}
-input[type=text]:focus,textarea:focus{border-color:var(--border-bright);}
-input::placeholder,textarea::placeholder{color:var(--dim);font-size:12px;}
-textarea{min-height:60px;}
+/* 左側 */
+.editor{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.form-area{flex:1;overflow-y:auto;padding:20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+
+.modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.mode-lbl{font-size:11px;color:var(--dim);letter-spacing:.04em;}
+.stat{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--orange);}
 
 .pills{display:flex;gap:6px;flex-wrap:wrap;}
-.pill{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:none;color:var(--steel);transition:all .15s;white-space:nowrap;}
+.pill{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:none;color:var(--steel);transition:all .15s;white-space:nowrap;}
 .pill:hover{border-color:var(--border-bright);}
 .pill.sel-info{border-color:#4A90C4;color:#4A90C4;background:rgba(74,144,196,.12);}
 .pill.sel-warn{border-color:var(--yellow);color:var(--yellow);background:rgba(240,192,64,.1);}
-.pill.sel-normal{border-color:var(--green);color:var(--green);background:rgba(76,175,122,.1);}
 
-.tr{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
-.ty{width:52px;text-align:center;}
-.tmo{width:44px;text-align:center;}
-.td{width:44px;text-align:center;}
-.tt{width:58px;text-align:center;}
-.lbl{font-size:13px;color:var(--steel);}
+.field-label{font-size:11px;font-weight:500;color:var(--steel);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
+textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--white);font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .15s;line-height:1.7;}
+textarea:focus{border-color:var(--border-bright);}
+textarea::placeholder{color:var(--dim);font-size:12px;}
 
-.escrow{display:flex;align-items:flex-start;gap:7px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:7px;margin-bottom:7px;}
-.esctag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);min-width:26px;padding-top:2px;}
-.escfields{flex:1;display:flex;flex-direction:column;gap:5px;}
-.escfields input{background:var(--bg-input);font-size:12px;}
-.iactions{display:flex;flex-direction:column;gap:3px;}
+/* 解析預覽 */
+.prev-label{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+.prev-label span{color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:11px;}
+.cat-block{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;margin-bottom:6px;overflow:hidden;}
+.cat-head{background:var(--bg-card);padding:6px 12px;font-size:12px;color:var(--orange);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.cat-head .cnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);}
+.cat-items{padding:6px 12px;display:flex;flex-direction:column;gap:3px;}
+.cat-item{font-size:12px;color:var(--steel-light);padding:3px 0;border-bottom:1px solid var(--border);}
+.cat-item:last-child{border-bottom:none;}
 
-.btn-icon{background:none;border:1px solid var(--border);border-radius:3px;color:var(--steel);cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;}
-.btn-icon:hover{border-color:var(--border-bright);color:var(--white);}
-.btn-icon.del:hover{border-color:var(--red);color:var(--red);}
-.btn-add{background:none;border:1px dashed var(--border-bright);border-radius:4px;color:var(--steel);font-size:12px;font-family:'Noto Sans TC',sans-serif;padding:6px 14px;cursor:pointer;width:100%;transition:all .15s;}
-.btn-add:hover{border-color:var(--orange);color:var(--orange);}
-
-.restore-box{background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;padding:12px;margin-bottom:14px;}
-.restore-label{font-size:11px;font-weight:600;color:var(--orange);letter-spacing:.06em;margin-bottom:6px;}
-
-.sv-modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
-.sv-mode-lbl{font-size:11px;color:var(--dim);}
-.sv-stat{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);}
-.svp-label{font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 5px;display:flex;align-items:center;gap:8px;}
-.svp-label span{color:var(--orange);font-family:'JetBrains Mono',monospace;}
-.svp-cat{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;margin-bottom:5px;overflow:hidden;}
-.svp-cat-h{background:var(--bg-card);padding:5px 10px;font-size:12px;color:var(--orange);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;}
-.svp-cat-h .cnt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);}
-.svp-items{padding:5px 10px;display:flex;flex-direction:column;gap:2px;}
-.svp-item{font-size:12px;color:var(--steel-light);padding:2px 0;border-bottom:1px solid var(--border);}
-.svp-item:last-child{border-bottom:none;}
-
-.foot{background:var(--bg-panel);border-top:1px solid var(--border);padding:11px 18px;display:flex;gap:8px;}
+/* 頁尾 */
+.foot{background:var(--bg-panel);border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:8px;}
 .btn-gen{background:var(--orange);color:var(--bg-deep);border:none;border-radius:4px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;padding:9px 22px;cursor:pointer;transition:background .15s;}
 .btn-gen:hover{background:var(--orange-dim);}
 .btn-clr{background:none;border:1px solid var(--border);border-radius:4px;color:var(--steel);font-size:12px;font-family:'Noto Sans TC',sans-serif;padding:9px 14px;cursor:pointer;transition:all .15s;}
 .btn-clr:hover{border-color:var(--border-bright);color:var(--white);}
 
-.prev-head{background:var(--bg-panel);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;}
+/* 右側預覽 */
+.preview{display:flex;flex-direction:column;overflow:hidden;}
+.prev-head{background:var(--bg-panel);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;}
 .prev-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--steel);letter-spacing:.12em;}
 .prev-title span{color:var(--green);}
 .btn-copy{margin-left:auto;background:none;border:1px solid var(--border-bright);border-radius:4px;color:var(--steel-light);font-size:11px;font-family:'JetBrains Mono',monospace;padding:5px 12px;cursor:pointer;transition:all .15s;}
 .btn-copy:hover,.btn-copy.copied{border-color:var(--green);color:var(--green);}
 .prev-body{flex:1;overflow-y:auto;padding:20px;}
-.prev-out{font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:var(--white);white-space:pre-wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:18px 22px;min-height:160px;}
+.prev-out{font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.9;color:var(--white);white-space:pre-wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:20px 24px;min-height:160px;}
 .prev-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--dim);}
-.prev-empty .icon{font-size:30px;opacity:.4;}
+.prev-empty .icon{font-size:32px;opacity:.4;}
+.prev-empty p{font-size:13px;}
 
-::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-@media(max-width:768px){.workspace{grid-template-columns:1fr;}.preview{height:400px;}}
+@media(max-width:768px){.workspace{grid-template-columns:1fr;}.preview{height:50vh;}}
 </style>
 </head>
 <body>
+
 <header>
-  <div class="hbadge">RPT</div>
-  <h1>督導回報產生器</h1>
+  <div class="hbadge">OBS</div>
+  <h1>所見情形產生器</h1>
   <div id="clock"></div>
 </header>
+
 <div class="workspace">
 
-<!-- ── 左側表單 ── -->
-<div class="editor">
-  <div class="form-area">
+  <!-- 左側 -->
+  <div class="editor">
+    <div class="form-area">
 
-    <div class="restore-box">
-      <div class="restore-label">貼入全文回復</div>
-      <textarea id="sv-restore" placeholder="貼入上次督導回報全文，自動解析還原所有欄位…" style="min-height:64px;" oninput="svRestore()"></textarea>
-    </div>
-
-    <div class="fg"><div class="fl">回報單位 <span class="req">*</span></div>
-      <input id="sv-unit" list="sv-unit-hl" placeholder="直接輸入數字，如：000" autocomplete="off">
-      <datalist id="sv-unit-hl"></datalist></div>
-
-    <div class="fg"><div class="fl">受督導單位 <span class="req">*</span></div>
-      <input id="sv-target" list="sv-target-hl" placeholder="直接輸入數字，如：000-0" autocomplete="off">
-      <datalist id="sv-target-hl"></datalist></div>
-
-    <div class="fg"><div class="fl">駐地</div>
-      <input id="sv-place" list="sv-place-hl" placeholder="例：縣市+駐地" autocomplete="off">
-      <datalist id="sv-place-hl"></datalist></div>
-
-    <div class="fg"><div class="fl">任務名稱 <span class="req">*</span></div>
-      <input id="sv-mission" placeholder="例：OO督導"></div>
-
-    <div class="fg"><div class="fl">報別</div>
-      <div class="pills" id="sv-stage">
-        <button class="pill sel-info" data-v="初報" data-col="info">初報</button>
-        <button class="pill" data-v="續報" data-col="warn">續報</button>
-        <button class="pill" data-v="終報" data-col="normal">終報</button>
-      </div></div>
-
-    <div class="fg"><div class="fl">到達時間 <span class="req">*</span></div>
-      <div class="tr">
-        <input class="ty" id="sv-ay" placeholder="000"><span class="lbl">年</span>
-        <input class="tmo" id="sv-amo" placeholder="00"><span class="lbl">月</span>
-        <input class="td" id="sv-ad" placeholder="00"><span class="lbl">日</span>
-        <input class="tt" id="sv-at" placeholder="0000"><span class="lbl">時</span>
-      </div></div>
-
-    <div class="fg"><div class="fl">離開時間 <span class="hint">初報可留空</span></div>
-      <div class="tr">
-        <input class="ty" id="sv-dy" placeholder="000"><span class="lbl">年</span>
-        <input class="tmo" id="sv-dmo" placeholder="00"><span class="lbl">月</span>
-        <input class="td" id="sv-dd" placeholder="00"><span class="lbl">日</span>
-        <input class="tt" id="sv-dt" placeholder="0000"><span class="lbl">時</span>
-      </div></div>
-
-    <div class="fg"><div class="fl">督導長官 <span class="req">*</span></div>
-      <input id="sv-insp" placeholder="例：職稱＋OOO＋階級"></div>
-
-    <div class="fg"><div class="fl">督導長官人數 <span class="hint">留空不顯示</span></div>
-      <input id="sv-insp-cnt" placeholder="例：3"></div>
-
-    <div class="fg"><div class="fl">陪同人員 <span class="hint">多單位可新增分層</span></div>
-      <div id="sv-esc"></div>
-      <button class="btn-add" onclick="addEsc()">＋ 新增陪同單位</button></div>
-
-    <div class="fg">
-      <div class="sv-modebar">
-        <span class="sv-mode-lbl">輸出模式：</span>
-        <div class="pills" id="sv-mode">
+      <div class="modebar">
+        <span class="mode-lbl">輸出模式：</span>
+        <div class="pills" id="mode">
           <button class="pill sel-info" data-v="normal" data-col="info">正常版</button>
           <button class="pill" data-v="brief" data-col="warn">精簡版</button>
         </div>
-        <span class="sv-stat" id="sv-stat">－</span>
+        <span class="stat" id="stat">－</span>
       </div>
-      <div class="fl">所見情形 <span class="hint">終報貼入，自動辨識類別與項目</span></div>
-      <textarea id="sv-obs" placeholder="直接貼上各員工提供內容，格式不限，系統自動辨識類別與項目。
+
+      <div class="field-label">貼入所見情形內容</div>
+      <textarea id="obs" placeholder="直接貼上各員工提供內容，格式不限，系統自動辨識類別與項目。
 
 支援混貼，例如：
+
 （一）OO類：
 1、項目內容
+2、項目內容
 
 一、OO類：
-（一）項目內容" style="min-height:160px;" oninput="svPreview()"></textarea>
-      <div id="sv-prev-box" style="display:none;">
-        <div class="svp-label">解析預覽 <span id="sv-prev-stat"></span></div>
-        <div id="sv-prev-content"></div>
+（一）項目內容
+（二）項目內容
+
+(一)OO類
+1.
+2." style="min-height:calc(100vh - 280px);" oninput="preview()"></textarea>
+
+      <div id="prev-box" style="display:none;">
+        <div class="prev-label">解析預覽 <span id="prev-stat"></span></div>
+        <div id="prev-content"></div>
       </div>
+
     </div>
-
-  </div>
-  <div class="foot">
-    <button class="btn-gen" onclick="generate()">產生回報</button>
-    <button class="btn-clr" onclick="clearForm()">清除</button>
-  </div>
-</div>
-
-<!-- ── 右側預覽 ── -->
-<div class="preview">
-  <div class="prev-head">
-    <div class="prev-title">OUTPUT <span>▮</span></div>
-    <button class="btn-copy" id="copyBtn" onclick="copyOut()">複製全文</button>
-  </div>
-  <div class="prev-body">
-    <div id="prevEmpty" class="prev-empty">
-      <div class="icon">📋</div>
-      <p>填寫左側欄位後點擊「產生回報」</p>
+    <div class="foot">
+      <button class="btn-gen" onclick="generate()">產生所見情形</button>
+      <button class="btn-clr" onclick="clearAll()">清除</button>
     </div>
-    <div id="prevOut" class="prev-out" style="display:none;"></div>
   </div>
-</div>
 
-</div><!-- /workspace -->
+  <!-- 右側 -->
+  <div class="preview">
+    <div class="prev-head">
+      <div class="prev-title">OUTPUT <span>▮</span></div>
+      <button class="btn-copy" id="copyBtn" onclick="copyOut()">複製全文</button>
+    </div>
+    <div class="prev-body">
+      <div id="prevEmpty" class="prev-empty">
+        <div class="icon">📋</div>
+        <p>貼入內容後點擊「產生所見情形」</p>
+      </div>
+      <div id="prevOut" class="prev-out" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
 
 <script>
 'use strict';
@@ -227,298 +163,257 @@ document.addEventListener('click',e=>{
   const grp=pill.closest('.pills'); if(!grp) return;
   grp.querySelectorAll('.pill').forEach(p=>p.className='pill');
   pill.classList.add('sel-'+(pill.dataset.col||'info'));
-  if(grp.id==='sv-mode') setTimeout(svPreview,30);
+  setTimeout(preview,30);
 });
 function getPill(id){
   const g=document.getElementById(id); if(!g) return '';
   const s=g.querySelector('.pill[class*="sel-"]'); return s?s.dataset.v:'';
 }
-function setPill(id,val){
-  const g=document.getElementById(id); if(!g) return;
-  g.querySelectorAll('.pill').forEach(p=>{
-    p.className='pill';
-    if(p.dataset.v===val) p.classList.add('sel-'+(p.dataset.col||'info'));
-  });
+
+// ── 降階層級定義 ──
+// 層級 0：壹貳參（章節，不在此處理）
+// 層級 1：一、二、三、
+// 層級 2：（一）（二）（三）
+// 層級 3：1、2、3、
+// 層級 4：(1)(2)(3) 或 （1）（2）（3）含數字
+// 層級 5：a b c（純英文字母開頭）
+// 層級 6：(a)(b)(c)
+
+function detectLevel(t){
+  if(!t) return -1;
+  if(/^[壹貳參肆伍陸柒捌玖拾]、/.test(t)) return 0;       // 章節
+  if(/^[一二三四五六七八九十百]+[、]/.test(t)) return 1;    // 一、
+  if(/^[\（\(][一二三四五六七八九十]+[\）\)]/.test(t)) return 2; // （一）
+  if(/^\d+[、]/.test(t)) return 3;                          // 1、
+  if(/^[\（\(]\d+[\）\)]/.test(t)) return 4;               // (1)
+  if(/^[a-zA-Z][.、\s]/.test(t)&&t.length>1) return 5;     // a.
+  if(/^[\（\(][a-zA-Z][\）\)]/.test(t)) return 6;          // (a)
+  return -1; // 非編號行（延伸說明）
 }
 
-// ── History ──
-const HK='rpt_sv_hist';
-function loadHist(){try{return JSON.parse(localStorage.getItem(HK)||'{}')}catch{return{}}}
-function saveHist(k,v){
-  if(!v||v==='（未填）') return;
-  const h=loadHist(); if(!h[k]) h[k]=[];
-  if(!h[k].includes(v)){h[k].unshift(v);h[k]=h[k].slice(0,10);}
-  try{localStorage.setItem(HK,JSON.stringify(h))}catch{}
-  refreshDL(k);
+function stripPrefix(t){
+  return t
+    .replace(/^[壹貳參肆伍陸柒捌玖拾]、/,'')
+    .replace(/^[一二三四五六七八九十百]+[、]/,'')
+    .replace(/^[\（\(][一二三四五六七八九十]+[\）\)]\s*/,'')
+    .replace(/^\d+[、]\s*/,'')
+    .replace(/^[\（\(]\d+[\）\)]\s*/,'')
+    .replace(/^[a-zA-Z][.、]\s*/,'')
+    .replace(/^[\（\(][a-zA-Z][\）\)]\s*/,'')
+    .trim();
 }
-function refreshDL(k){
-  const dl=document.getElementById(k+'-hl'); if(!dl) return;
-  dl.innerHTML=(loadHist()[k]||[]).map(v=>`<option value="${v}">`).join('');
-}
-['sv-unit','sv-target','sv-place'].forEach(refreshDL);
 
-// ── Auto-format ──
-function fmtUnit(v){v=v.trim();return /^\d+$/.test(v)?`第${v}旅`:v;}
-function fmtTarget(v){v=v.trim();const m=v.match(/^(\d+)-(\d+)$/);return m?`第${m[1]}營第${m[2]}連`:v;}
-document.addEventListener('blur',e=>{
-  const el=e.target;
-  if(el.id==='sv-unit') el.value=fmtUnit(el.value);
-  if(el.id==='sv-target') el.value=fmtTarget(el.value);
-},true);
+// 輸出時重新編號
+const ZH_BIG  =['壹','貳','參','肆','伍','陸','柒','捌','玖','拾'];
+const ZH_MID  =['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+const ALPHA   =['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
-// ── Escort ──
-function addEsc(unit='',person=''){
-  const c=document.getElementById('sv-esc');
-  const idx=c.querySelectorAll('.escrow').length;
-  const zh=['一','二','三','四','五','六','七','八','九','十'];
-  const isFirst=idx===0;
-  const row=document.createElement('div'); row.className='escrow';
-  row.innerHTML=`
-    <div class="esctag">${isFirst?'—':'('+( zh[idx]||idx+1)+')'}</div>
-    <div class="escfields">
-      <input placeholder="${isFirst?'單位（多單位時填，單一可留空）':'單位'}" value="${unit}">
-      <input placeholder="人員，例：職稱＋OOO＋階級" value="${person}">
-    </div>
-    <div class="iactions">
-      <button class="btn-icon" onclick="mvEsc(this,'up')">↑</button>
-      <button class="btn-icon" onclick="mvEsc(this,'dn')">↓</button>
-      <button class="btn-icon del" onclick="rmEsc(this)">✕</button>
-    </div>`;
-  c.appendChild(row); renumEsc();
-}
-function rmEsc(btn){btn.closest('.escrow').remove();renumEsc();}
-function mvEsc(btn,dir){
-  const r=btn.closest('.escrow'),c=r.parentElement;
-  if(dir==='up'&&r.previousElementSibling) c.insertBefore(r,r.previousElementSibling);
-  else if(dir==='dn'&&r.nextElementSibling) c.insertBefore(r.nextElementSibling,r);
-  renumEsc();
-}
-function renumEsc(){
-  const zh=['一','二','三','四','五','六','七','八','九','十'];
-  const rows=document.querySelectorAll('#sv-esc .escrow');
-  const multi=rows.length>1;
-  rows.forEach((r,i)=>{
-    r.querySelector('.esctag').textContent=multi?`(${zh[i]||i+1})`:'—';
-    r.querySelector('input').placeholder=multi?'單位':'單位（多單位時填，單一可留空）';
-  });
-}
-function escBlock(){
-  const rows=document.querySelectorAll('#sv-esc .escrow');
-  const zh=['一','二','三','四','五','六','七','八','九','十'];
-  if(rows.length<=1){
-    const u=rows[0]?rows[0].querySelectorAll('input')[0].value.trim():'';
-    const p=rows[0]?rows[0].querySelectorAll('input')[1].value.trim():'';
-    const combo=u&&p?`${u}：${p}`:(p||u);
-    return `三、陪同人員：${combo}陪同。`;
+function formatPrefix(level, idx){
+  switch(level){
+    case 0: return ZH_BIG[idx]+'、';
+    case 1: return ZH_MID[idx]+'、';
+    case 2: return '（'+ZH_MID[idx]+'）';
+    case 3: return (idx+1)+'、';
+    case 4: return '（'+(idx+1)+'）';
+    case 5: return ALPHA[idx]+'.';
+    case 6: return '('+ALPHA[idx]+')';
+    default: return '';
   }
-  let s=`三、陪同人員：\n`;
-  rows.forEach((r,i)=>{
-    const u=r.querySelectorAll('input')[0].value.trim();
-    const p=r.querySelectorAll('input')[1].value.trim();
-    if(u&&p) s+=`（${zh[i]||i+1}）${u}：${p}。\n`;
-    else if(p) s+=`（${zh[i]||i+1}）${p}。\n`;
-  });
-  return s.trimEnd();
 }
-addEsc();
 
-// ── svParse / svPreview ──
-const ZH=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
-function zhN(i){return ZH[i]||String(i+1);}
-
-function svIsCat(t){
-  if(!t||/^[壹貳參肆伍陸]、/.test(t)) return false;
-  if(/^\d+[、.．]/.test(t)) return false;
-  if(/^[\（\(]?\d+[\）\)]/.test(t)&&!/[：:]/.test(t)) return false;
-  if(/^[一二三四五六七八九十]+[、]/.test(t)) return true;
-  if(/^[\（\(][一二三四五六七八九十\d]+[\）\)]/.test(t)) return true;
-  return false;
+// ── Parse ──
+function isSummary(t){
+  // 統計摘要行：有「計N項/類/件」且不以冒號結尾
+  return /計\d+[項類件]/.test(t)&&!/[：:]\s*$/.test(t)&&t.replace(/[^\u4e00-\u9fff]/g,'').length<15;
 }
-function svExtractCat(t){return t.replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/,'').replace(/[：:]\s*$/,'').trim();}
-function svExtractItem(t){return t.replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.\s]+/,'').trim();}
 
-function svParse(raw){
+function isCatTitle(t){
+  // 類別標題：以冒號結尾且夠短
+  return /[：:]\s*$/.test(t) && t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
+}
+
+function extractCatName(t){
+  return t.replace(/[：:]\s*$/,'')
+          .replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/,'')
+          .replace(/計\d+[項類件]\d*[項類件]?/g,'')
+          .trim();
+}
+
+// parse 回傳 [{name, lines:[{level,text}]}]
+function parse(raw){
   if(!raw.trim()) return [];
   const secPat=/^[壹貳參肆伍陸]、|^肆、|^已循/;
-  const lines=raw.split('\n').filter(l=>!secPat.test(l.trim()));
-  const cats=[]; let cur=null;
-  const isItem=t=>/^[\（\(]?\d+[\）\)、.．]/.test(t)&&!svIsCat(t);
-  for(const line of lines){
-    const t=line.trim(); if(!t) continue;
-    if(svIsCat(t)){cur={name:svExtractCat(t),items:[]};cats.push(cur);}
-    else if(cur){
-      const content=isItem(t)?(svExtractItem(t)||'（待填）'):svExtractItem(t);
-      if(content||isItem(t)) cur.items.push(content||'（待填）');
+  const allLines=raw.split('\n')
+    .filter(l=>!secPat.test(l.trim()))
+    .filter(l=>!isSummary(l.trim()));
+
+  // 偵測是否有類別+子層結構
+  // 條件：有類別標題行（冒號結尾），其後接有編號行
+  let hasCats=false;
+  for(const line of allLines){
+    const t=line.trim();
+    if(isCatTitle(t)){hasCats=true;break;}
+  }
+
+  const cats=[];let cur=null;
+
+  if(hasCats){
+    // 有類別標題
+    for(const line of allLines){
+      const t=line.trim(); if(!t) continue;
+      if(isCatTitle(t)){
+        cur={name:extractCatName(t),lines:[]};cats.push(cur);
+      } else if(cur){
+        const lv=detectLevel(t);
+        if(lv>=0) cur.lines.push({level:lv,text:stripPrefix(t)});
+        else if(cur.lines.length>0) cur.lines.push({level:-1,text:t}); // 延伸說明
+      }
+    }
+  } else {
+    // 沒有類別標題，平鋪
+    cur={name:'',lines:[]};cats.push(cur);
+    for(const line of allLines){
+      const t=line.trim(); if(!t) continue;
+      const lv=detectLevel(t);
+      if(lv>=0) cur.lines.push({level:lv,text:stripPrefix(t)});
+      else if(cur.lines.length>0) cur.lines.push({level:-1,text:t});
     }
   }
-  return cats.filter(c=>c.name&&c.items.length>0);
+  return cats.filter(c=>c.lines.length>0);
 }
 
-function svPreview(){
-  const raw=document.getElementById('sv-obs').value;
-  const cats=svParse(raw);
-  const box=document.getElementById('sv-prev-box');
-  if(!raw.trim()||!cats.length){
+// 把 lines 陣列重新編號輸出
+// baseLevel：此組 lines 最淺層對應的輸出層級
+// 例如類別下的一、二、三（minLv=1）→ baseLevel=3 → 輸出為 1、2、3、
+function renderLines(lines, baseLevel){
+  if(!lines.length) return '';
+  const validLevels=lines.filter(l=>l.level>=0).map(l=>l.level);
+  const minLv=validLevels.length?Math.min(...validLevels):baseLevel;
+  const shift=baseLevel-minLv; // 層級偏移量
+
+  const counters={};
+  let out='';
+  let lastRealLv=minLv;
+  let subIdx=0; // 延伸行計數（level<0）
+
+  for(const {level,text} of lines){
+    if(level<0){
+      // 延伸說明行：去掉原有的 1. 2. 等前綴再輸出
+      const cleanText=text.replace(/^\d+[.．]\s*/,'').trim();
+      const subLv=Math.min(lastRealLv+shift+1, 6);
+      out+=formatPrefix(subLv,subIdx)+cleanText+'\n';
+      subIdx++;
+      continue;
+    }
+    subIdx=0;
+    const outLv=level+shift;
+    if(counters[outLv]===undefined) counters[outLv]=0;
+    Object.keys(counters).forEach(k=>{if(Number(k)>outLv) delete counters[k];});
+    out+=formatPrefix(outLv,counters[outLv])+text+'\n';
+    counters[outLv]++;
+    lastRealLv=level;
+  }
+  return out;
+}
+
+// 計算某 cat 的項目數（level 最淺的有效層級的行數）
+function countItems(cat){
+  if(!cat.lines.length) return 0;
+  const levels=cat.lines.filter(l=>l.level>=0).map(l=>l.level);
+  if(!levels.length) return 0;
+  const minLv=Math.min(...levels);
+  return cat.lines.filter(l=>l.level===minLv).length;
+}
+
+// ── Preview ──
+function preview(){
+  const raw=document.getElementById('obs').value;
+  const cats=parse(raw);
+  const box=document.getElementById('prev-box');
+  if(!raw.trim()||!cats.length||!cats.some(c=>c.lines.length)){
     box.style.display='none';
-    document.getElementById('sv-stat').textContent='－';
+    document.getElementById('stat').textContent='－';
     return;
   }
-  const total=cats.reduce((s,c)=>s+c.items.length,0);
-  document.getElementById('sv-prev-stat').textContent=`${cats.length}類 ${total}項`;
-  document.getElementById('sv-stat').textContent=`${cats.length}類 ${total}項`;
-  document.getElementById('sv-prev-content').innerHTML=cats.map((cat,i)=>`
-    <div class="svp-cat">
-      <div class="svp-cat-h"><span>（${ZH[i]||i+1}）${cat.name}</span><span class="cnt">${cat.items.length}項</span></div>
-      <div class="svp-items">${cat.items.map((it,j)=>`<div class="svp-item">${j+1}、${it}</div>`).join('')}</div>
-    </div>`).join('');
+  const tc=cats.filter(c=>c.name).length||0;
+  const ti=cats.reduce((s,c)=>s+countItems(c),0);
+  const statTxt=tc>0?`${tc}類 ${ti}項`:`${ti}項`;
+  document.getElementById('prev-stat').textContent=statTxt;
+  document.getElementById('stat').textContent=statTxt;
+
+  document.getElementById('prev-content').innerHTML=cats.map((cat,i)=>{
+    const itemCount=countItems(cat);
+    const previewLines=cat.lines.slice(0,8).map(({level,text})=>{
+      if(level<0) return `<div class="cat-item" style="padding-left:20px;color:var(--dim);font-size:11px;">${text}</div>`;
+      const indent=(level-Math.min(...cat.lines.filter(l=>l.level>=0).map(l=>l.level)))*14;
+      return `<div class="cat-item" style="padding-left:${indent}px;">${text}</div>`;
+    }).join('');
+    const more=cat.lines.length>8?`<div class="cat-item" style="color:var(--dim);font-size:11px;">… 共${cat.lines.length}行</div>`:'';
+    return `
+    <div class="cat-block">
+      <div class="cat-head">
+        <span>${cat.name?`（${ZH_MID[i]||i+1}）${cat.name}`:cat.name===''?'（未分類）':cat.name}</span>
+        <span class="cnt">${itemCount}項</span>
+      </div>
+      <div class="cat-items">${previewLines}${more}</div>
+    </div>`;
+  }).join('');
   box.style.display='block';
 }
 
-// ── Time helper ──
-function tStr(ay,amo,ad,at){
-  const y=document.getElementById(ay).value.trim();
-  const mo=document.getElementById(amo).value.trim();
-  const d=document.getElementById(ad).value.trim();
-  const t=document.getElementById(at).value.trim();
-  return{str:`${y||'000'}年${mo||'0'}月${d||'00'}日${t||'0000'}時`,filled:!!(y||mo||d||t),y,mo,d,t};
-}
-
-// ── Restore ──
-function svRestore(){
-  const raw=document.getElementById('sv-restore').value; if(!raw.trim()) return;
-  const txt=raw.replace(/\(/g,'（').replace(/\)/g,'）');
-
-  // 單位
-  const unitM=txt.match(/^(.+?)報告：/m);
-  if(unitM) setv('sv-unit',unitM[1].trim());
-
-  // 案緣
-  const yb=txt.match(/壹、案緣：[\s\n]*([\s\S]+?)(?=\n+(?:貳、|說明：))/);
-  if(yb){
-    const body=yb[1].replace(/\n/g,' ').trim();
-    // 報別
-    const sm=body.match(/[（(]([^）)]*(?:初報|續報|終報)[^）)]*)[）)]/);
-    if(sm){const s=sm[1];setPill('sv-stage',s.includes('初')?'初報':s.includes('終')?'終報':'續報');}
-    // 本屬...案
-    const im=body.match(/本屬([\s\S]+?)(?:案[（(]|$)/);
-    if(im){
-      let inner=im[1].replace(/\n/g,' ').trim();
-      const tgtM=inner.match(/^((?:第\S+?(?:連|排|班|營|旅|師|隊|部|群))+)/);
-      if(tgtM){setv('sv-target',tgtM[1]);inner=inner.slice(tgtM[1].length).trim();}
-      const plM=inner.match(/^（([^）]*)）\s*/);
-      if(plM){setv('sv-place',plM[1].trim());inner=inner.slice(plM[0].length).trim();}
-      const acM=inner.match(/接受(.+?)$/);
-      if(acM){
-        const after=acM[1].trim();
-        const rp=/上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長/;
-        if(rp.test(after)){
-          const rm=after.match(/^(.+?(?:上將|中將|少將|上校|中校|少校|上尉|中尉|少尉|士官長))\s*(.*)$/);
-          if(rm){setv('sv-insp',rm[1].trim());if(rm[2].trim())setv('sv-mission',rm[2].trim());}
-        } else setv('sv-mission',after);
-      }
-    }
-  }
-
-  // 督導長官（二、）
-  const iM=txt.match(/二、[^：\n]{0,12}：([^\n]+)/);
-  if(iM){
-    const v=iM[1].trim().replace(/[。.]\s*$/,'');
-    const cM=v.match(/等(\d+)員/);
-    if(cM){setv('sv-insp-cnt',cM[1]);setv('sv-insp',v.replace(/等\d+員.*$/,'').trim());}
-    else setv('sv-insp',v);
-  }
-
-  // 時間
-  const tM=txt.match(/一、時間：(\d+)年(\d+)月(\d+)日(\d+)時/);
-  if(tM){setv('sv-ay',tM[1]);setv('sv-amo',tM[2]);setv('sv-ad',tM[3]);setv('sv-at',tM[4]);}
-  // 離開
-  const ds=txt.match(/至(\d{3,4})時(?:結束|離開|離連)/);
-  if(ds){setv('sv-dy',tM?.[1]||'');setv('sv-dmo',tM?.[2]||'');setv('sv-dd',tM?.[3]||'');setv('sv-dt',ds[1]);}
-  else{
-    const df=txt.match(/並於(\d+)年(\d+)月(\d+)日(\d+)時(?:離開|離連|結束)/);
-    if(df){setv('sv-dy',df[1]);setv('sv-dmo',df[2]);setv('sv-dd',df[3]);setv('sv-dt',df[4]);}
-  }
-
-  // 陪同人員（三、）
-  const eM=txt.match(/三、陪同人員：([^\n]+)/);
-  if(eM){
-    const raw2=eM[1].trim().replace(/[。.]\s*$/,'').replace(/陪同$/,'').trim();
-    document.getElementById('sv-esc').innerHTML='';
-    const multi=[...raw2.matchAll(/（[一二三四五六七八九十\d]+）([^：\n]+)：([^\n]+)/g)];
-    if(multi.length) multi.forEach(r=>addEsc(r[1].trim(),r[2].trim()));
-    else addEsc('',raw2);
-  }
-
-  // 所見情形（參、）
-  const sM=txt.match(/參、[^：\n]*：\n([\s\S]+?)(?=\n肆、|$)/);
-  if(sM){
-    const cleaned=sM[1].split('\n')
-      .filter(l=>!/本次督導所見情形(?:共)?計\d+/.test(l))
-      .filter(l=>!/^[一二三四五六七八九十]+、.{0,30}(?:計\d+[類項件]|如後|如下所示)/.test(l.trim()))
-      .join('\n').trim();
-    setv('sv-obs',cleaned);
-    setTimeout(svPreview,50);
-  }
-}
-function setv(id,v){const el=document.getElementById(id);if(el) el.value=v;}
-
 // ── Generate ──
 function generate(){
-  const unit=document.getElementById('sv-unit').value.trim()||'（未填）';
-  const target=document.getElementById('sv-target').value.trim()||'（未填）';
-  const place=document.getElementById('sv-place').value.trim();
-  const mission=document.getElementById('sv-mission').value.trim()||'OO督導';
-  const stage=getPill('sv-stage');
-  const insp=document.getElementById('sv-insp').value.trim()||'（未填）';
-  const inspCnt=document.getElementById('sv-insp-cnt').value.trim();
-  const mode=getPill('sv-mode');
-  const arr=tStr('sv-ay','sv-amo','sv-ad','sv-at');
-  const dep=tStr('sv-dy','sv-dmo','sv-dd','sv-dt');
-  saveHist('sv-unit',unit);saveHist('sv-target',target);saveHist('sv-place',place);
+  const raw=document.getElementById('obs').value.trim();
+  const mode=getPill('mode');
+  const cats=parse(raw);
 
-  const ps=place?`（${place}）`:'';
-  const inspStr=inspCnt?`${insp}等${inspCnt}員`:insp;
-  let tLine=`一、時間：${arr.str}抵達。`;
-  if(dep.filled) tLine=`一、時間：${arr.str}抵達，並於${dep.str}離開。`;
+  let out='參、所見情形：\n';
 
-  // 所見情形
-  const raw=document.getElementById('sv-obs').value.trim();
-  let obsOut='';
-  if(stage==='初報'){
-    obsOut='賡續掌握督導情形後報。';
-  } else if(stage==='續報'){
-    obsOut='所見情形彙整中。';
+  if(!cats.length||!cats.some(c=>c.lines.length)){
+    out+='所見情形彙整中。';
   } else {
-    const cats=svParse(raw);
-    const tc=cats.length,ti=cats.reduce((s,c)=>s+c.items.length,0);
-    if(!tc){
-      obsOut='所見情形彙整中。';
-    } else if(mode==='brief'){
-      obsOut=`一、本次督導所見情形共計${tc}類${ti}項，摘述如後：\n`;
-      cats.forEach((c,i)=>{ obsOut+=`（${ZH[i]||i+1}）${c.name}計${c.items.length}項。\n`; });
-      obsOut=obsOut.trimEnd();
+    const validCats=cats.filter(c=>c.name!==undefined);
+    const hasCatNames=validCats.some(c=>c.name);
+    const tc=validCats.filter(c=>c.name).length;
+    const ti=validCats.reduce((s,c)=>s+countItems(c),0);
+
+    if(mode==='brief'){
+      if(hasCatNames){
+        out+=`一、本次督導所見情形共計${tc}類${ti}項，摘述如後：\n`;
+        validCats.forEach((c,i)=>{
+          if(c.name) out+=`（${ZH_MID[i]||i+1}）${c.name}計${countItems(c)}項。\n`;
+          else out+=renderLines(c.lines,1);
+        });
+      } else {
+        out+=`一、本次督導所見情形共計${ti}項，摘述如後：\n`;
+        validCats.forEach(c=>{ out+=renderLines(c.lines,1); });
+      }
+      out=out.trimEnd();
     } else {
-      obsOut=`一、本次督導所見情形計${tc}類${ti}項，摘述如後：\n`;
-      cats.forEach((c,i)=>{
-        obsOut+=`（${ZH[i]||i+1}）${c.name}：\n`;
-        c.items.forEach((it,j)=>{ obsOut+=`${j+1}、${it}\n`; });
-      });
-      obsOut=obsOut.trimEnd();
+      // 正常版
+      if(hasCatNames){
+        out+=`一、本次督導所見情形計${tc}類${ti}項，摘述如後：\n`;
+        validCats.forEach((c,i)=>{
+          if(c.name){
+            out+=`（${ZH_MID[i]||i+1}）${c.name}：\n`;
+            out+=renderLines(c.lines,3); // 類別下：1、2、3、
+          } else {
+            out+=renderLines(c.lines,1);
+          }
+        });
+      } else {
+        out+=`一、本次督導所見情形計${ti}項，摘述如後：\n`;
+        validCats.forEach(c=>{ out+=renderLines(c.lines,1); });
+      }
+      out=out.trimEnd();
     }
   }
-
-  const out=`${unit}報告：\n壹、案緣：本屬${target}${ps}接受${insp}${mission}案（${stage}）\n貳、說明：\n${tLine}\n二、督導長官：${inspStr}。\n${escBlock()}\n參、所見情形：\n${obsOut}\n肆、已循戰情體系回報。`;
 
   document.getElementById('prevEmpty').style.display='none';
   const el=document.getElementById('prevOut');
   el.style.display='block'; el.textContent=out;
   document.getElementById('copyBtn').classList.remove('copied');
   document.getElementById('copyBtn').textContent='複製全文';
-
-  // 終報離開時間提醒
-  if(stage==='終報'&&!dep.filled){
-    setTimeout(()=>alert('⚠️ 終報提醒：「離開時間」尚未填寫！\n請補充後重新產生回報。'),100);
-  }
 }
 
 // ── Copy ──
@@ -532,16 +427,10 @@ function copyOut(){
 }
 
 // ── Clear ──
-function clearForm(){
-  document.querySelectorAll('#sv-ay,#sv-amo,#sv-ad,#sv-at,#sv-dy,#sv-dmo,#sv-dd,#sv-dt').forEach(el=>el.value='');
-  ['sv-unit','sv-target','sv-place','sv-mission','sv-insp','sv-insp-cnt','sv-obs','sv-restore'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  setPill('sv-stage','初報');
-  setPill('sv-mode','normal');
-  document.getElementById('sv-esc').innerHTML=''; addEsc();
-  document.getElementById('sv-prev-box').style.display='none';
-  document.getElementById('sv-stat').textContent='－';
+function clearAll(){
+  document.getElementById('obs').value='';
+  document.getElementById('prev-box').style.display='none';
+  document.getElementById('stat').textContent='－';
   document.getElementById('prevEmpty').style.display='flex';
   document.getElementById('prevOut').style.display='none';
 }
