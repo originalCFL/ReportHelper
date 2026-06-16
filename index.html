@@ -184,7 +184,7 @@ function detectLevel(t){
   if(/^[壹貳參肆伍陸柒捌玖拾]、/.test(t)) return 0;       // 章節
   if(/^[一二三四五六七八九十百]+[、]/.test(t)) return 1;    // 一、
   if(/^[\（\(][一二三四五六七八九十]+[\）\)]/.test(t)) return 2; // （一）
-  if(/^\d+[、]/.test(t)) return 3;                          // 1、
+  if(/^\d+[、.．]\s*/.test(t)) return 3;                     // 1、 或 1.
   if(/^[\（\(]\d+[\）\)]/.test(t)) return 4;               // (1)
   if(/^[a-zA-Z][.、\s]/.test(t)&&t.length>1) return 5;     // a.
   if(/^[\（\(][a-zA-Z][\）\)]/.test(t)) return 6;          // (a)
@@ -196,7 +196,7 @@ function stripPrefix(t){
     .replace(/^[壹貳參肆伍陸柒捌玖拾]、/,'')
     .replace(/^[一二三四五六七八九十百]+[、]/,'')
     .replace(/^[\（\(][一二三四五六七八九十]+[\）\)]\s*/,'')
-    .replace(/^\d+[、]\s*/,'')
+    .replace(/^\d+[、.．]\s*/,'')
     .replace(/^[\（\(]\d+[\）\)]\s*/,'')
     .replace(/^[a-zA-Z][.、]\s*/,'')
     .replace(/^[\（\(][a-zA-Z][\）\)]\s*/,'')
@@ -232,6 +232,14 @@ function isCatTitle(t){
   return /[：:]\s*$/.test(t) && t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
 }
 
+// 無冒號的純文字標題：本身不含編號前綴、長度短（<10字），且不是說明句（不含標點符號）
+function isBareTitle(t){
+  if(!t) return false;
+  if(detectLevel(t)>=0) return false; // 已是編號行，不算標題
+  if(/[，。、；：!?]/.test(t)) return false; // 含標點，視為一般說明句
+  return t.length>0 && t.length<10;
+}
+
 function extractCatName(t){
   return t.replace(/[：:]\s*$/,'')
           .replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/,'')
@@ -248,35 +256,73 @@ function parse(raw){
     .filter(l=>!isSummary(l.trim()));
 
   // 偵測是否有類別+子層結構
-  // 條件：有類別標題行（冒號結尾），其後接有編號行
+  // 條件A：有冒號結尾的類別標題
+  // 條件B：有「無冒號短標題行」且下一個有效行是編號項目（職安 → 1.NDI...）
   let hasCats=false;
-  for(const line of allLines){
-    const t=line.trim();
+  for(let i=0;i<allLines.length;i++){
+    const t=allLines[i].trim();
+    if(!t) continue;
     if(isCatTitle(t)){hasCats=true;break;}
+    if(isBareTitle(t)){
+      // 往後找下一個非空行，確認是否為編號項目
+      for(let j=i+1;j<allLines.length;j++){
+        const nt=allLines[j].trim();
+        if(!nt) continue;
+        if(detectLevel(nt)>=0){hasCats=true;}
+        break;
+      }
+      if(hasCats) break;
+    }
   }
 
   const cats=[];let cur=null;
+  let prevIsRefLine=false; // 前一個有效行是否為「如下」引用語句
+
+  function pushLine(t){
+    const lv=detectLevel(t);
+    if(lv>=0){
+      // 若前一行含「如下」（如下：、如下所示、如下等），且此行是 1. 2. 句點型編號
+      // → 視為前一句的引用子項，不當獨立項目；計入降階
+      const isPeriodNum=/^\d+[.．]\s*/.test(t)&&!/^\d+、/.test(t);
+      if(prevIsRefLine&&isPeriodNum&&cur&&cur.lines.length>0){
+        cur.lines.push({level:-1,text:t});
+      } else {
+        cur.lines.push({level:lv,text:stripPrefix(t)});
+      }
+    } else if(cur&&cur.lines.length>0){
+      cur.lines.push({level:-1,text:t});
+    }
+    prevIsRefLine=/如下[：:]?\s*$/.test(t);
+  }
 
   if(hasCats){
-    // 有類別標題
-    for(const line of allLines){
-      const t=line.trim(); if(!t) continue;
+    for(let i=0;i<allLines.length;i++){
+      const t=allLines[i].trim(); if(!t) continue;
       if(isCatTitle(t)){
         cur={name:extractCatName(t),lines:[]};cats.push(cur);
+        prevIsRefLine=false;
+      } else if(isBareTitle(t)){
+        // 確認下一個有效行是編號項目，才視為標題；否則當一般內容
+        let isRealTitle=false;
+        for(let j=i+1;j<allLines.length;j++){
+          const nt=allLines[j].trim(); if(!nt) continue;
+          isRealTitle=detectLevel(nt)>=0; break;
+        }
+        if(isRealTitle){
+          cur={name:t,lines:[]};cats.push(cur);
+          prevIsRefLine=false;
+        } else if(cur){
+          pushLine(t);
+        }
       } else if(cur){
-        const lv=detectLevel(t);
-        if(lv>=0) cur.lines.push({level:lv,text:stripPrefix(t)});
-        else if(cur.lines.length>0) cur.lines.push({level:-1,text:t}); // 延伸說明
+        pushLine(t);
       }
     }
   } else {
-    // 沒有類別標題，平鋪
     cur={name:'',lines:[]};cats.push(cur);
     for(const line of allLines){
       const t=line.trim(); if(!t) continue;
-      const lv=detectLevel(t);
-      if(lv>=0) cur.lines.push({level:lv,text:stripPrefix(t)});
-      else if(cur.lines.length>0) cur.lines.push({level:-1,text:t});
+      pushLine(t);
     }
   }
   return cats.filter(c=>c.lines.length>0);
