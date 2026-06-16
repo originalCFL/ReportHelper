@@ -231,12 +231,19 @@ function isSummary(t){
 }
 
 function isCatTitle(t){
-  // 類別標題：以冒號結尾、夠短，且本身不含編號前綴（一、二、1、（一）等）
-  // 若已有編號前綴，代表這是「項目本身」而非新類別（即使以冒號結尾，如「三、…如下：」）
-  if(detectLevel(t)>=0) return false;
-  // 排除含完整語句標點（逗號、句號、頓號等）的行：類別標題通常是簡短名詞，不會有逗號
+  // 類別標題：以冒號結尾、夠短，且不含完整語句標點
   if(/[，。；！？、]/.test(t)) return false;
-  return /[：:]\s*$/.test(t) && t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
+  if(!/[：:]\s*$/.test(t)) return false;
+
+  const lv=detectLevel(t);
+  if(lv===2){
+    // 特例：（一）名稱： 這種格式是「已輸出的類別標題」標準格式
+    // 條件：去除編號和冒號後，剩餘名稱要短（<10字）才算類別，避免誤判一般項目
+    const name=t.replace(/^[\（\(][一ㄧ二三四五六七八九十]+[\）\)]\s*/,'').replace(/[：:]\s*$/,'').trim();
+    return name.length>0 && name.length<10;
+  }
+  if(lv>=0) return false; // 其他已有編號前綴的行（一、二、1、等）視為項目本身，不當新類別
+  return t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
 }
 
 // 無冒號的純文字標題：本身不含編號前綴，且：
@@ -265,9 +272,11 @@ function extractCatName(t){
 function parse(raw){
   if(!raw.trim()) return [];
   const secPat=/^[壹貳參肆伍陸]、|^肆、|^已循/;
+  const headerPat=/^[一二三四五六七八九十]+、本次督導所見情形(?:共)?計\d+(?:類)?\d*項?，摘述如後[：:]?\s*$/; // 已輸出格式的摘要標頭
   const emojiPat=/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u; // 表情符號：群組提示文字常見特徵
   const allLines=raw.split('\n')
     .filter(l=>!secPat.test(l.trim()))
+    .filter(l=>!headerPat.test(l.trim()))
     .filter(l=>!emojiPat.test(l))
     .filter(l=>!isSummary(l.trim()));
 
