@@ -205,7 +205,23 @@ function stripPrefix(t){
 
 // 輸出時重新編號
 const ZH_BIG  =['壹','貳','參','肆','伍','陸','柒','捌','玖','拾'];
-const ZH_MID  =['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+// 動態產生中文數字（支援到99，符合一般所見情形分類數量）
+function toZhNum(n){
+  // n 為 1-based 數字
+  const digits=['零','一','二','三','四','五','六','七','八','九'];
+  if(n<=10) return ['十','一','二','三','四','五','六','七','八','九','十'][n];
+  if(n<20) return '十'+digits[n-10];
+  const tens=Math.floor(n/10), ones=n%10;
+  return digits[tens]+'十'+(ones?digits[ones]:'');
+}
+// 模擬陣列存取介面（1-based index 用 idx 直接傳入即可，這裡用 Proxy 支援 ZH_MID[i] 寫法）
+const ZH_MID = new Proxy({}, {
+  get(target, prop){
+    const idx = Number(prop);
+    if(Number.isInteger(idx)) return toZhNum(idx+1); // 陣列是 0-based，中文數字從1開始
+    return undefined;
+  }
+});
 const ALPHA   =['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
 function formatPrefix(level, idx){
@@ -222,10 +238,14 @@ function formatPrefix(level, idx){
 }
 
 // ── Parse ──
+// 統計尾巴正則：「計N項N件」或「N項N件」（無計字，如「防空武器17項17件」）
+const STAT_PAT=/(?:計)?\d+[項類件]\d*[項類件]?/g;
+const STAT_PAT_END=/(?:計)?\d+[項類件]\d*[項類件]?\s*$/; // 限定在行尾，避免誤抓內文數字
+
 function isSummary(t){
-  // 統計摘要行：去掉「計N項N件」後幾乎沒有剩餘文字（純統計句，無類別名稱）
-  if(!/計\d+[項類件]/.test(t)) return false;
-  const remain=t.replace(/計\d+[項類件]\d*[項類件]?/g,'').trim();
+  // 統計摘要行：去掉統計部分後幾乎沒有剩餘文字（純統計句，無類別名稱）
+  if(!STAT_PAT_END.test(t)) return false;
+  const remain=t.replace(STAT_PAT_END,'').trim();
   // 剩餘文字過短（<2字）才視為純摘要；若有類別名稱（如「膳勤管理」）則保留
   return remain.replace(/[^\u4e00-\u9fff\w]/g,'').length<2;
 }
@@ -243,18 +263,18 @@ function isCatTitle(t){
     return name.length>0 && name.length<10;
   }
   if(lv>=0) return false; // 其他已有編號前綴的行（一、二、1、等）視為項目本身，不當新類別
-  return t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
+  return t.replace(STAT_PAT,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
 }
 
 // 無冒號的純文字標題：本身不含編號前綴，且：
 // (a) 短句無標點（如「職安」），或
-// (b) 含「計N項N件」統計但去除統計後仍有實質短名稱（如「膳勤管理計8項8件」）
+// (b) 含統計尾巴（計N項N件 或 N項N件）但去除後仍有實質短名稱（如「膳勤管理計8項8件」「防空武器17項17件」）
 function isBareTitle(t){
   if(!t) return false;
   if(detectLevel(t)>=0) return false;
-  // 含統計字樣的標題：去掉統計部分後檢查剩餘是否為短名稱
-  if(/計\d+[項類件]/.test(t)){
-    const remain=t.replace(/計\d+[項類件]\d*[項類件]?/g,'').trim();
+  // 含統計尾巴的標題：去掉統計部分後檢查剩餘是否為短名稱
+  if(STAT_PAT_END.test(t)){
+    const remain=t.replace(STAT_PAT_END,'').trim();
     return remain.length>0 && remain.length<12 && !/[，。；！？]/.test(remain);
   }
   if(/[，。、；：!?]/.test(t)) return false; // 含標點，視為一般說明句
@@ -263,8 +283,8 @@ function isBareTitle(t){
 
 function extractCatName(t){
   return t.replace(/[：:]\s*$/,'')
-          .replace(/^[\（\(]?[一二三四五六七八九十\d]+[\）\)、．.]\s*/,'')
-          .replace(/計\d+[項類件]\d*[項類件]?/g,'')
+          .replace(/^[\（\(]?[一ㄧ二三四五六七八九十\d]+[\）\)、．.]\s*/,'')
+          .replace(STAT_PAT,'')
           .trim();
 }
 
