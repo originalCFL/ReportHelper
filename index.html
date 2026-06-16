@@ -182,7 +182,7 @@ function getPill(id){
 function detectLevel(t){
   if(!t) return -1;
   if(/^[壹貳參肆伍陸柒捌玖拾]、/.test(t)) return 0;       // 章節
-  if(/^[一二三四五六七八九十百]+[、]/.test(t)) return 1;    // 一、
+  if(/^[一二三四五六七八九十百]+[、.．]\s*/.test(t)) return 1;    // 一、 或 一.
   if(/^[\（\(][一二三四五六七八九十]+[\）\)]/.test(t)) return 2; // （一）
   if(/^\d+[、.．]\s*/.test(t)) return 3;                     // 1、 或 1.
   if(/^[\（\(]\d+[\）\)]/.test(t)) return 4;               // (1)
@@ -194,7 +194,7 @@ function detectLevel(t){
 function stripPrefix(t){
   return t
     .replace(/^[壹貳參肆伍陸柒捌玖拾]、/,'')
-    .replace(/^[一二三四五六七八九十百]+[、]/,'')
+    .replace(/^[一二三四五六七八九十百]+[、.．]\s*/,'')
     .replace(/^[\（\(][一二三四五六七八九十]+[\）\)]\s*/,'')
     .replace(/^\d+[、.．]\s*/,'')
     .replace(/^[\（\(]\d+[\）\)]\s*/,'')
@@ -223,19 +223,31 @@ function formatPrefix(level, idx){
 
 // ── Parse ──
 function isSummary(t){
-  // 統計摘要行：有「計N項/類/件」且不以冒號結尾
-  return /計\d+[項類件]/.test(t)&&!/[：:]\s*$/.test(t)&&t.replace(/[^\u4e00-\u9fff]/g,'').length<15;
+  // 統計摘要行：去掉「計N項N件」後幾乎沒有剩餘文字（純統計句，無類別名稱）
+  if(!/計\d+[項類件]/.test(t)) return false;
+  const remain=t.replace(/計\d+[項類件]\d*[項類件]?/g,'').trim();
+  // 剩餘文字過短（<2字）才視為純摘要；若有類別名稱（如「膳勤管理」）則保留
+  return remain.replace(/[^\u4e00-\u9fff\w]/g,'').length<2;
 }
 
 function isCatTitle(t){
-  // 類別標題：以冒號結尾且夠短
+  // 類別標題：以冒號結尾、夠短，且本身不含編號前綴（一、二、1、（一）等）
+  // 若已有編號前綴，代表這是「項目本身」而非新類別（即使以冒號結尾，如「三、…如下：」）
+  if(detectLevel(t)>=0) return false;
   return /[：:]\s*$/.test(t) && t.replace(/計\d+[項類件]\d*[項類件]?/g,'').replace(/[^\u4e00-\u9fff\w]/g,'').length < 20;
 }
 
-// 無冒號的純文字標題：本身不含編號前綴、長度短（<10字），且不是說明句（不含標點符號）
+// 無冒號的純文字標題：本身不含編號前綴，且：
+// (a) 短句無標點（如「職安」），或
+// (b) 含「計N項N件」統計但去除統計後仍有實質短名稱（如「膳勤管理計8項8件」）
 function isBareTitle(t){
   if(!t) return false;
-  if(detectLevel(t)>=0) return false; // 已是編號行，不算標題
+  if(detectLevel(t)>=0) return false;
+  // 含統計字樣的標題：去掉統計部分後檢查剩餘是否為短名稱
+  if(/計\d+[項類件]/.test(t)){
+    const remain=t.replace(/計\d+[項類件]\d*[項類件]?/g,'').trim();
+    return remain.length>0 && remain.length<12 && !/[，。；！？]/.test(remain);
+  }
   if(/[，。、；：!?]/.test(t)) return false; // 含標點，視為一般說明句
   return t.length>0 && t.length<10;
 }
@@ -276,23 +288,25 @@ function parse(raw){
   }
 
   const cats=[];let cur=null;
-  let prevIsRefLine=false; // 前一個有效行是否為「如下」引用語句
+  let refMode=false; // 是否處於「如下」引用子項模式
 
   function pushLine(t){
     const lv=detectLevel(t);
+    const isPeriodNum=/^\d+[.．]\s*/.test(t)&&!/^\d+、/.test(t);
     if(lv>=0){
-      // 若前一行含「如下」（如下：、如下所示、如下等），且此行是 1. 2. 句點型編號
-      // → 視為前一句的引用子項，不當獨立項目；計入降階
-      const isPeriodNum=/^\d+[.．]\s*/.test(t)&&!/^\d+、/.test(t);
-      if(prevIsRefLine&&isPeriodNum&&cur&&cur.lines.length>0){
+      // refMode 中且此行是句點型編號 → 持續視為延伸子項
+      if(refMode&&isPeriodNum&&cur&&cur.lines.length>0){
         cur.lines.push({level:-1,text:t});
       } else {
+        // 非句點型編號（中文數字、頓號等）→ 結束 refMode，視為正式項目
         cur.lines.push({level:lv,text:stripPrefix(t)});
+        refMode=false;
       }
     } else if(cur&&cur.lines.length>0){
       cur.lines.push({level:-1,text:t});
     }
-    prevIsRefLine=/如下[：:]?\s*$/.test(t);
+    // 若此行以「如下」結尾 → 進入 refMode，後續句點編號都當延伸子項
+    if(/如下[：:]?\s*$/.test(t)) refMode=true;
   }
 
   if(hasCats){
@@ -300,7 +314,7 @@ function parse(raw){
       const t=allLines[i].trim(); if(!t) continue;
       if(isCatTitle(t)){
         cur={name:extractCatName(t),lines:[]};cats.push(cur);
-        prevIsRefLine=false;
+        refMode=false;
       } else if(isBareTitle(t)){
         // 確認下一個有效行是編號項目，才視為標題；否則當一般內容
         let isRealTitle=false;
@@ -309,8 +323,8 @@ function parse(raw){
           isRealTitle=detectLevel(nt)>=0; break;
         }
         if(isRealTitle){
-          cur={name:t,lines:[]};cats.push(cur);
-          prevIsRefLine=false;
+          cur={name:extractCatName(t),lines:[]};cats.push(cur);
+          refMode=false;
         } else if(cur){
           pushLine(t);
         }
